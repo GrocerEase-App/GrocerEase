@@ -1,3 +1,11 @@
+//
+//  AddItemView.swift
+//  GrocerEase
+//
+//  Created by Arushi Tyagi on 4/22/25.
+//
+
+
 import SwiftUI
 import SwiftData
 
