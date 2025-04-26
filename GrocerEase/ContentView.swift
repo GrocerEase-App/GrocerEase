@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var groceryList: [GroceryItem] = []
-    @State private var showAddItem = false
+    @State private var showSearchItem = false
+    @State private var selectedItem: GroceryItem?
 
     var body: some View {
         NavigationView {
@@ -33,7 +34,7 @@ struct ContentView: View {
                                 .foregroundColor(.gray)
                         }
                         .onTapGesture {
-                            // Edit item screen here
+                            selectedItem = item
                         }
                     }
                 }
@@ -43,14 +44,19 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        showAddItem.toggle()
+                        showSearchItem.toggle()
                     }) {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showAddItem) {
-                AddItemView(groceryList: $groceryList)
+            .sheet(item: $selectedItem) { item in
+                ManualEntryView(groceryList: $groceryList, existingItem: item) {
+                    selectedItem = nil
+                }
+            }
+            .sheet(isPresented: $showSearchItem) {
+                SearchItemView(groceryList: $groceryList)
             }
         }
     }
@@ -59,6 +65,7 @@ struct ContentView: View {
         groceryList.remove(atOffsets: offsets)
     }
 }
+
 
 #Preview {
     ContentView()
