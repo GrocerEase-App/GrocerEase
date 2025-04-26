@@ -7,49 +7,43 @@
 
 
 import SwiftUI
-import SwiftData
 
 struct AddItemView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-
-    @State private var name = ""
-    @State private var quantity = 1
-    @State private var priceString = ""
+    @Environment(\.presentationMode) var presentationMode
+    @Binding var groceryList: [GroceryItem]
+    @State private var itemName = ""
+    @State private var quantity = ""
+    @State private var price = ""
     @State private var store = ""
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
-                Section("Item Info") {
-                    TextField("Name", text: $name)
-                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...99)
-                    TextField("Price", text: $priceString)
+                Section(header: Text("Item Details")) {
+                    TextField("Name", text: $itemName)
+                    TextField("Quantity", text: $quantity)
+                    TextField("Price", text: $price)
                         .keyboardType(.decimalPad)
-                    TextField("Store (optional)", text: $store)
+                    TextField("Store", text: $store)
                 }
             }
-            .navigationTitle("Add Item")
+            .navigationTitle("New Item")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        dismiss()
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveItem()
-                        dismiss()
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        if let priceValue = Double(price) {
+                            let newItem = GroceryItem(name: itemName, quantity: quantity, price: priceValue, store: store)
+                            groceryList.append(newItem)
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
-                    .disabled(name.isEmpty || Double(priceString) == nil)
                 }
             }
         }
-    }
-
-    private func saveItem() {
-        let price = Double(priceString) ?? 0.0
-        let newItem = Item(name: name, quantity: quantity, price: price, store: store)
-        modelContext.insert(newItem)
     }
 }
