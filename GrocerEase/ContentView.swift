@@ -7,25 +7,58 @@
 
 import SwiftUI
 
+enum ListOrder: String, CaseIterable {
+    case name = "Name"
+    case date = "Date Added"
+    case price = "Price"
+    case store = "Store"
+}
+
+enum ListDirection: String, CaseIterable {
+    case ascending = "Ascending"
+    case descending = "Descending"
+}
+
 struct ContentView: View {
-    @State private var groceryList: [GroceryItem] = []
+    @State private var groceryList: [GroceryItem] = GroceryItem.samples
     @State private var showSearchItem = false
     @State private var selectedItem: GroceryItem?
-
+    @State private var listOrder: ListOrder = .name
+    @State private var listDirection: ListDirection = .ascending
+    
+    private var sortedGroceryList: [GroceryItem] {
+        let list = groceryList.sorted(by: {
+            switch listOrder {
+            case .name:
+                return $0.name < $1.name
+            case .date:
+                return $0.dateAdded < $1.dateAdded
+            case .price:
+                return $0.price < $1.price
+            case .store:
+                return $0.store < $1.store
+            }
+        })
+        
+        return listDirection == .ascending ? list : list.reversed()
+    }
+    
     var body: some View {
         NavigationView {
             List {
-                ForEach(groceryList) { item in
+                ForEach(sortedGroceryList) { item in
                     HStack {
                         Button(action: {
                             if let index = groceryList.firstIndex(where: { $0.id == item.id }) {
                                 groceryList[index].isCompleted.toggle()
                             }
                         }) {
-                            Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                            Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
                         }
+                        .imageScale(.large)
+                        .padding(.trailing)
                         .buttonStyle(BorderlessButtonStyle())
-
+                        
                         VStack(alignment: .leading) {
                             Text(item.name)
                                 .strikethrough(item.isCompleted, color: .gray)
@@ -42,7 +75,10 @@ struct ContentView: View {
             }
             .navigationTitle("GrocerEase")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    MainMenu(listOrder: $listOrder, listDirection: $listDirection)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
                         showSearchItem.toggle()
                     }) {
@@ -51,16 +87,19 @@ struct ContentView: View {
                 }
             }
             .sheet(item: $selectedItem) { item in
-                ManualEntryView(groceryList: $groceryList, existingItem: item) {
-                    selectedItem = nil
+                NavigationView {
+                    EditItemView(groceryList: $groceryList, existingItem: item) {
+                        selectedItem = nil
+                    }
                 }
+                
             }
             .sheet(isPresented: $showSearchItem) {
                 SearchItemView(groceryList: $groceryList)
             }
         }
     }
-
+    
     func deleteItem(at offsets: IndexSet) {
         groceryList.remove(atOffsets: offsets)
     }

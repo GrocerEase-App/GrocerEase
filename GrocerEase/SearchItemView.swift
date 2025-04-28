@@ -11,34 +11,30 @@ struct SearchItemView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var groceryList: [GroceryItem]
     @State private var showManualEntry = false
+    @State private var searchText: String = ""
 
     var body: some View {
         NavigationView {
-            VStack {
-                Text("(Placeholder for API Search Results)")
-                    .font(.headline)
-                    .padding()
-                Spacer()
+            
+            List(["Sponsored Products"], id: \.self) { item in
+                Text(item)
             }
+            .searchable(text: $searchText, prompt: "Search")
             .navigationTitle("New Item")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showManualEntry.toggle()
-                    }) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        EditItemView(groceryList: $groceryList, existingItem: nil) {
+                            showManualEntry = false
+                        }
+                    } label: {
                         Image(systemName: "pencil")
                     }
                 }
-            }
-            .sheet(isPresented: $showManualEntry) {
-                ManualEntryView(groceryList: $groceryList, existingItem: nil) {
-                    showManualEntry = false
-                    presentationMode.wrappedValue.dismiss()
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
                 }
             }
         }
