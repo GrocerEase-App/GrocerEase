@@ -103,6 +103,8 @@ struct ContentView: View {
                 LocationPickerPopover { coord in
                     locationDescription = "Lat: \(coord.latitude), Lon: \(coord.longitude)"
                     showingPopover = false
+                }.onDisappear {
+                    print(locationDescription ?? "none")
                 }
             }
             

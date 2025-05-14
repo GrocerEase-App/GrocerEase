@@ -13,8 +13,9 @@ struct SearchItemView: View {
     @State private var showManualEntry = false
     // See Helpers/DebouncedState.swift for explanation
     @DebouncedState(delay: 0.75) private var searchText: String = ""
-    @State private var isLoading: Bool = false
     @State private var isSearching: Bool = false
+    @State private var searchStore: String?
+    @State private var loadingText: String?
     
     @State private var searchResults: [GroceryItem] = []
     
@@ -57,22 +58,26 @@ struct SearchItemView: View {
                 // Some will have to be called multiple times (e.g. Safeway on Mission and on Morrissey)
                 Task {
                     do {
-                        isLoading = true
-                        self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: "3132")
-                        isLoading = false
+                        loadingText = "Finding Safeway Stores..."
+                        let stores = try await SafewayScraper.shared.getNearbyStores(latitude: UserDefaults.standard.double(forKey: "userLatitude"), longitude: UserDefaults.standard.double(forKey: "userLongitude"), radius: UserDefaults.standard.double(forKey: "userSearchRadius"))
+                        print(stores.map {$0.id})
+                        self.searchStore = stores.first!.id
+                        loadingText = "Searching Safeway #\(self.searchStore ?? "unknown")"
+                        self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!)
+                        loadingText = nil
                     } catch {
                         print("❌ Failed: \(error)")
-                        isLoading = false
+                        loadingText = nil
                     }
                 }
             }
             .navigationTitle("New Item")
             .toolbar {
-                if isLoading {
+                if loadingText != nil {
                     ToolbarItemGroup(placement: .bottomBar) {
                         HStack {
                             ProgressView()
-                            Text("Searching Safeway #3132")
+                            Text(loadingText ?? "Loading complete")
                         }
                     }
                 }

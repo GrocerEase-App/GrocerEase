@@ -13,6 +13,7 @@ import MapKit
 
 struct LocationPickerPopover: View {
     @StateObject private var viewModel = LocationPickerViewModel()
+    @State private var radius: Double = 10 // Default radius
     
     var onLocationSelected: ((CLLocationCoordinate2D) -> Void)?
     
@@ -39,11 +40,20 @@ struct LocationPickerPopover: View {
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
+            
+            VStack {
+                Text("Search Radius: \(Int(radius)) miles")
+                Slider(value: $radius, in: 1...100, step: 1)
+            }
+            .padding(.vertical)
 
             if viewModel.selectedCoordinate != nil {
                 Button("Continue") {
                     if let coord = viewModel.selectedCoordinate {
                         onLocationSelected?(coord)
+                        UserDefaults.standard.set(coord.latitude, forKey: "userLatitude")
+                        UserDefaults.standard.set(coord.longitude, forKey: "userLongitude")
+                        UserDefaults.standard.set(radius, forKey: "userSearchRadius")
                     }
                 }
                 .frame(maxWidth: .infinity)
