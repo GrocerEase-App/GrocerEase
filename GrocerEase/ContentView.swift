@@ -25,6 +25,8 @@ struct ContentView: View {
     @State private var selectedItem: GroceryItem?
     @State private var listOrder: ListOrder = .name
     @State private var listDirection: ListDirection = .ascending
+    @State private var showingPopover: Bool = false
+    @State private var locationDescription: String?
     
     private var sortedGroceryList: [GroceryItem] {
         let list = groceryList.sorted(by: {
@@ -76,7 +78,7 @@ struct ContentView: View {
             .navigationTitle("GrocerEase")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    MainMenu(listOrder: $listOrder, listDirection: $listDirection)
+                    MainMenu(listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingPopover)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
@@ -97,6 +99,13 @@ struct ContentView: View {
             .sheet(isPresented: $showSearchItem) {
                 SearchItemView(groceryList: $groceryList)
             }
+            .sheet(isPresented: $showingPopover) {
+                LocationPickerPopover { coord in
+                    locationDescription = "Lat: \(coord.latitude), Lon: \(coord.longitude)"
+                    showingPopover = false
+                }
+            }
+            
         }
     }
     

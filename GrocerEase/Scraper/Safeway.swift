@@ -15,7 +15,8 @@ class SafewayScraper: NSObject, Scraper {
     
     var webView: WKWebView!
     var hiddenWindow: UIWindow?
-    var subscriptionKey: String?
+    var xapiKey: String?
+    var apimKey: String?
     let initialUrl = URL(string: "https://www.safeway.com/")!
     var firstLoadComplete = false
     
@@ -37,7 +38,7 @@ class SafewayScraper: NSObject, Scraper {
     // I'm not sure if this is the best way to do this. Sets up an async callback
     // for when the subscription key has been retrieved.
     func loadInitialPage() async throws {
-        if subscriptionKey != nil {
+        if xapiKey != nil && apimKey != nil {
             return
         }
         return try await withCheckedThrowingContinuation { continuation in
@@ -56,7 +57,7 @@ class SafewayScraper: NSObject, Scraper {
             throw error
         }
         
-        guard let subscriptionKey = self.subscriptionKey else {
+        guard let apimKey = self.apimKey else {
             throw "Safeway subscription key not found"
         }
         
@@ -96,7 +97,7 @@ class SafewayScraper: NSObject, Scraper {
         
         // Add headers to request
         let headers: [String: String] = [
-            "Ocp-Apim-Subscription-Key": subscriptionKey,
+            "Ocp-Apim-Subscription-Key": apimKey,
             "Accept": "application/json, text/plain, */*",
             "User-Agent": Constants.UserAgent
         ]
@@ -124,40 +125,106 @@ class SafewayScraper: NSObject, Scraper {
         
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double) async throws -> [GroceryStore] {
-        throw "Not Implemented"
+    func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+        // Make sure subscription key is present
+        do {
+            try await loadInitialPage()
+        } catch {
+            throw error
+        }
+        
+        guard let xapiKey = self.xapiKey else {
+            throw "Safeway subscription key not found"
+        }
+        
+        let baseURLString = "https://www.safeway.com/abs/pub/xapi/storeresolver/v2/all"
+
+        var components = URLComponents(string: baseURLString)
+        components?.queryItems = [
+            URLQueryItem(name: "latitude", value: String(latitude)),
+            URLQueryItem(name: "longitude", value: String(longitude)),
+            URLQueryItem(name: "excludeBanners", value: "none"),
+            URLQueryItem(name: "size", value: "20"),
+            URLQueryItem(name: "radius", value: String(radius))
+        ]
+        
+        guard let finalUrl = components?.url else {
+            throw "Couldn't generate search URL in Safeway Scraper"
+        }
+        var request = URLRequest(url: finalUrl)
+        
+        let headers: [String: String] = [
+            "Ocp-Apim-Subscription-Key": xapiKey,
+            "Accept": "application/json, text/plain, */*",
+            "User-Agent": Constants.UserAgent
+        ]
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let cookies: [HTTPCookie] = await webView.getAllCookiesAsync()
+        for (key, value) in HTTPCookie.requestHeaderFields(with: cookies) {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+        
+        let stores = apiResponse["instore"]["stores"].arrayValue.map { store in
+            var address: String? = nil
+            if let line1 = store["address"]["line1"].string,
+               let city = store["address"]["city"].string,
+               let state = store["address"]["state"].string,
+               let country = store["address"]["country"].string,
+               let zipcode = store["address"]["zip"].string
+            {
+                address = "\(line1), \(city), \(state), \(country) \(zipcode)"
+            }
+            return GroceryStore(id: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address)
+        }
+        
+        return stores
+        
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        
         // Ignore page loads unrelated to the initial request
         if webView.url != initialUrl {
             return
         }
-        
-        // Script for extracting the API key
+
         let js = """
-                (function() {
-                    const match = document.documentElement.innerHTML.match(/"apimProgramSubscriptionKey":"(.*?)"/);
-                    return match ? match[1] : null;
-                })()
-            """
-        
-        // Execute the script and retrieve the API key
+        (function() {
+            const html = document.documentElement.innerHTML;
+            const xapiMatch = html.match(/"xapiSubscriptionKey":"(.*?)"/);
+            const apimMatch = html.match(/"apimProgramSubscriptionKey":"(.*?)"/);
+            return {
+                xapi: xapiMatch ? xapiMatch[1] : null,
+                apim: apimMatch ? apimMatch[1] : null
+            };
+        })()
+        """
+
         webView.evaluateJavaScript(js) { result, error in
             if let error = error {
                 self.setupContinuation?.resume(throwing: error)
-            } else if let key = result as? String {
-                self.subscriptionKey = key
-                self.setupContinuation?.resume(returning: ())
-            } else {
+                return
+            }
+
+            guard let dict = result as? [String: Any],
+                  let xapi = dict["xapi"] as? String,
+                  let apim = dict["apim"] as? String else {
                 if !self.firstLoadComplete {
                     self.firstLoadComplete = true
                     return
                 } else {
-                    self.setupContinuation?.resume(throwing: "Couldn't retrieve Safeway API key")
+                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Safeway API keys")
+                    return
                 }
             }
+
+            self.xapiKey = xapi
+            self.apimKey = apim
+            self.setupContinuation?.resume(returning: ())
         }
     }
 }

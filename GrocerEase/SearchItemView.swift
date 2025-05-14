@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SearchItemView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @Binding var groceryList: [GroceryItem]
     @State private var showManualEntry = false
     // See Helpers/DebouncedState.swift for explanation
@@ -88,7 +88,7 @@ struct SearchItemView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
             }
