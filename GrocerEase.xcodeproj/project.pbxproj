@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		85F36D792DD43C6400FEB35C /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 85F36D782DD43C6400FEB35C /* Alamofire */; };
+		85F36D7C2DD43CB800FEB35C /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 85F36D7B2DD43CB800FEB35C /* SwiftyJSON */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		851301C12DB74D7B00593115 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +70,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85F36D7C2DD43CB800FEB35C /* SwiftyJSON in Frameworks */,
+				85F36D792DD43C6400FEB35C /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +132,8 @@
 			);
 			name = GrocerEase;
 			packageProductDependencies = (
+				85F36D782DD43C6400FEB35C /* Alamofire */,
+				85F36D7B2DD43CB800FEB35C /* SwiftyJSON */,
 			);
 			productName = GrocerEase;
 			productReference = 851301AF2DB74D7900593115 /* GrocerEase.app */;
@@ -208,6 +217,10 @@
 			);
 			mainGroup = 851301A62DB74D7900593115;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				85F36D772DD43C6400FEB35C /* XCRemoteSwiftPackageReference "Alamofire" */,
+				85F36D7A2DD43C9500FEB35C /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 851301B02DB74D7900593115 /* Products */;
 			projectDirPath = "";
@@ -299,6 +312,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -329,6 +343,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -575,6 +590,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		85F36D772DD43C6400FEB35C /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+		85F36D7A2DD43C9500FEB35C /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		85F36D782DD43C6400FEB35C /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85F36D772DD43C6400FEB35C /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		85F36D7B2DD43CB800FEB35C /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85F36D7A2DD43C9500FEB35C /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 851301A72DB74D7900593115 /* Project object */;
 }

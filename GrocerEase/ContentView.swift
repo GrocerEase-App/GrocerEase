@@ -32,7 +32,7 @@ struct ContentView: View {
             case .name:
                 return $0.name < $1.name
             case .date:
-                return $0.dateAdded < $1.dateAdded
+                return $0.timestamp < $1.timestamp
             case .price:
                 return $0.price < $1.price
             case .store:

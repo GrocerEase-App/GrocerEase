@@ -7,45 +7,45 @@
 
 import SwiftUI
 
-// TEMPORARY struct for search results
-// This can and should be replaced with GroceryItem eventually
-struct SearchResult: Identifiable {
-    let id = UUID()
-    var name: String
-    var imageUrl: URL?
-    var price: Double?
-}
-
 struct SearchItemView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var groceryList: [GroceryItem]
     @State private var showManualEntry = false
     // See Helpers/DebouncedState.swift for explanation
-    @DebouncedState(delay: 1.0) private var searchText: String = ""
+    @DebouncedState(delay: 0.75) private var searchText: String = ""
+    @State private var isLoading: Bool = false
+    @State private var isSearching: Bool = false
     
-    @State private var searchResults: [SearchResult] = []
+    @State private var searchResults: [GroceryItem] = []
     
     var body: some View {
         NavigationView {
             
             List(searchResults, id: \.id) { item in
                 HStack {
-                    AsyncImage(url: item.imageUrl) { image in
-                        image.resizable()
+                    if item.imageUrl != nil, let imageUrl = item.imageUrl {
+                        AsyncImage(url: URL(string: imageUrl)!) { image in
+                            image.resizable()
+                                .frame(width: 50, height: 50)
+                        } placeholder: {
+                            ProgressView()
+                        }
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray)
                             .frame(width: 50, height: 50)
-                    } placeholder: {
-                        ProgressView()
                     }
-                    .frame(width: 50, height: 50)
+                    
 
                     VStack(alignment: .leading) {
                         Text(item.name)
-                        Text("$" + String(format: "%.2f", item.price ?? 0.00) + " at Safeway")
+                        Text("$" + String(format: "%.2f", item.price) + " at Safeway")
                             .foregroundStyle(.secondary)
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "Search")
+            .listStyle(PlainListStyle())
+            .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
             .onChange(of: searchText) {
                 // If search text is empty, clear the results
                 if searchText == "" {
@@ -57,24 +57,26 @@ struct SearchItemView: View {
                 // Some will have to be called multiple times (e.g. Safeway on Mission and on Morrissey)
                 Task {
                     do {
-                        // Absolute nightmare JSON parsing. We will implement SwiftyJSON to clean this up later.
-                        // Effectively, this calls the scraper on the search query and retrieves the names, prices,
-                        // and images for the results then feeds them into the UI.
-                        let scraper = HeadlessSafewayScraper(searchQuery: searchText)
-                        let result = try await scraper.run()
-                        let dictionary = try! JSONSerialization.jsonObject(with: JSONSerialization.data(withJSONObject: result, options: []), options: []) as! [String: Any]
-                        let items = ((dictionary["primaryProducts"] as! [String: Any])["response"] as! [String: Any])["docs"] as! [[String: Any]]
-                        let results: [SearchResult] = items.map { item in
-                            SearchResult(name: "\((item["name"] as! String))", imageUrl: URL(string:"\((item["imageUrl"] as! String))"), price: item["price"] as? Double)
-                        }
-                        self.searchResults = results
+                        isLoading = true
+                        self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: "3132")
+                        isLoading = false
                     } catch {
                         print("❌ Failed: \(error)")
+                        isLoading = false
                     }
                 }
             }
             .navigationTitle("New Item")
             .toolbar {
+                if isLoading {
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        HStack {
+                            ProgressView()
+                            Text("Searching Safeway #3132")
+                        }
+                    }
+                }
+                
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         EditItemView(groceryList: $groceryList, existingItem: nil) {
@@ -93,3 +95,7 @@ struct SearchItemView: View {
         }
     }
 }
+
+//#Preview {
+//    SearchItemView()
+//}
