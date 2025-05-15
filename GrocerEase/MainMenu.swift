@@ -17,16 +17,7 @@ struct MainMenu: View {
             Text("Show Completed")
             
             Button("Choose Location") {
-                print("hi")
                 showingPopover = true
-            }
-            
-            Button("Test") {
-                Task {
-                    let stores = try? await SafewayScraper.shared.getNearbyStores(latitude: 36.9779513, longitude: -122.0282403, radius: 10)
-                    print(stores ?? "no stores")
-                }
-                
             }
 
             Menu("Sort By") {

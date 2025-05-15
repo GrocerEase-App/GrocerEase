@@ -21,12 +21,26 @@ enum ListDirection: String, CaseIterable {
 
 struct ContentView: View {
     @State private var groceryList: [GroceryItem] = GroceryItem.samples
-    @State private var showSearchItem = false
+    @State private var showingSearchSheet = false
     @State private var selectedItem: GroceryItem?
     @State private var listOrder: ListOrder = .name
     @State private var listDirection: ListDirection = .ascending
-    @State private var showingPopover: Bool = false
-    @State private var locationDescription: String?
+    @State private var showingLocationSheet: Bool = false
+    
+    private var searchOptionsSet: Bool {
+        let uds = UserDefaults.standard
+        if let _ = uds.object(forKey: "userLatitude") as? Double,
+           let _ = uds.object(forKey: "userLongitude") as? Double,
+           let _ = uds.object(forKey: "userSearchRadius") as? Double
+        {
+            return true
+        } else {
+            return false
+            
+        }
+    }
+    
+    @State private var showingAlert: Bool = false
     
     private var sortedGroceryList: [GroceryItem] {
         let list = groceryList.sorted(by: {
@@ -78,11 +92,15 @@ struct ContentView: View {
             .navigationTitle("GrocerEase")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    MainMenu(listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingPopover)
+                    MainMenu(listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingLocationSheet)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
-                        showSearchItem.toggle()
+                        if !searchOptionsSet {
+                            showingAlert = true
+                        } else {
+                            showingSearchSheet = true
+                        }
                     }) {
                         Image(systemName: "plus")
                     }
@@ -96,17 +114,29 @@ struct ContentView: View {
                 }
                 
             }
-            .sheet(isPresented: $showSearchItem) {
+            .sheet(isPresented: $showingSearchSheet) {
                 SearchItemView(groceryList: $groceryList)
             }
-            .sheet(isPresented: $showingPopover) {
-                LocationPickerPopover { coord in
-                    locationDescription = "Lat: \(coord.latitude), Lon: \(coord.longitude)"
-                    showingPopover = false
-                }.onDisappear {
-                    print(locationDescription ?? "none")
+            .sheet(isPresented: $showingLocationSheet) {
+                LocationSettings { coord, radius in
+                    print(coord, radius)
+                    UserDefaults.standard.set(coord.latitude, forKey: "userLatitude")
+                    UserDefaults.standard.set(coord.longitude, forKey: "userLongitude")
+                    UserDefaults.standard.set(radius, forKey: "userSearchRadius")
                 }
             }
+            .alert("Setup Incomplete", isPresented: $showingAlert) {
+                Button("Configure Location") {
+                    showingLocationSheet = true
+                }
+                Button("Enter Item Manually") {
+                    // TODO: Make this work
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("You need to select an origin location before you can search for items or continue to manual entry.")
+            }
+            
             
         }
     }

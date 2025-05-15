@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct EditItemView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @Binding var groceryList: [GroceryItem]
     var existingItem: GroceryItem? = nil 
     var onSave: (() -> Void)? = nil
@@ -33,7 +33,7 @@ struct EditItemView: View {
             if existingItem != nil {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
             }
@@ -52,7 +52,7 @@ struct EditItemView: View {
                             groceryList.append(newItem)
                         }
                         onSave?()
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
             }

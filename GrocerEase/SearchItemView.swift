@@ -37,7 +37,7 @@ struct SearchItemView: View {
                             .frame(width: 50, height: 50)
                     }
                     
-
+                    
                     VStack(alignment: .leading) {
                         Text(item.name)
                         Text("$" + String(format: "%.2f", item.price) + " at Safeway")
@@ -59,11 +59,18 @@ struct SearchItemView: View {
                 Task {
                     do {
                         loadingText = "Finding Safeway Stores..."
-                        let stores = try await SafewayScraper.shared.getNearbyStores(latitude: UserDefaults.standard.double(forKey: "userLatitude"), longitude: UserDefaults.standard.double(forKey: "userLongitude"), radius: UserDefaults.standard.double(forKey: "userSearchRadius"))
-                        print(stores.map {$0.id})
-                        self.searchStore = stores.first!.id
-                        loadingText = "Searching Safeway #\(self.searchStore ?? "unknown")"
-                        self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!)
+                        
+                        if let latitude = UserDefaults.standard.object(forKey: "userLatitude") as? Double,
+                           let longitude = UserDefaults.standard.object(forKey: "userLongitude") as? Double,
+                           let radius = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double {
+                            let stores = try await SafewayScraper.shared.getNearbyStores(latitude: latitude, longitude: longitude, radius: radius)
+                            // TODO: Handle no stores
+                            self.searchStore = stores.first!.id
+                            loadingText = "Searching Safeway #\(self.searchStore ?? "unknown")"
+                            self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!)
+                            
+                        }
+                        
                         loadingText = nil
                     } catch {
                         print("❌ Failed: \(error)")
