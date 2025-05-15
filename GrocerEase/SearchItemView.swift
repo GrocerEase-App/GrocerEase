@@ -14,7 +14,7 @@ struct SearchItemView: View {
     // See Helpers/DebouncedState.swift for explanation
     @DebouncedState(delay: 0.75) private var searchText: String = ""
     @State private var isSearching: Bool = false
-    @State private var searchStore: String?
+    @State private var searchStore: GroceryStore?
     @State private var loadingText: String?
     
     @State private var searchResults: [GroceryItem] = []
@@ -58,16 +58,16 @@ struct SearchItemView: View {
                 // Some will have to be called multiple times (e.g. Safeway on Mission and on Morrissey)
                 Task {
                     do {
-                        loadingText = "Finding Safeway Stores..."
+                        loadingText = "Finding Albertsons Stores..."
                         
                         if let latitude = UserDefaults.standard.object(forKey: "userLatitude") as? Double,
                            let longitude = UserDefaults.standard.object(forKey: "userLongitude") as? Double,
                            let radius = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double {
                             let stores = try await SafewayScraper.shared.getNearbyStores(latitude: latitude, longitude: longitude, radius: radius)
                             // TODO: Handle no stores
-                            self.searchStore = stores.first!.id
-                            loadingText = "Searching Safeway #\(self.searchStore ?? "unknown")"
-                            self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!)
+                            self.searchStore = stores.first!
+                            loadingText = "Searching \(self.searchStore?.brand ?? "") #\(self.searchStore?.id ?? "")"
+                            self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!.id)
                             
                         }
                         
