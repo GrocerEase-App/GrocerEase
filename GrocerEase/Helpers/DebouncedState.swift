@@ -35,7 +35,7 @@ struct DebouncedState<Value>: DynamicProperty {
     }
     
     init(wrappedValue: Value, delay: Double = 0.3) {
-        self._backingState = StateObject(wrappedValue: BackingState<Value>(originalValue: wrappedValue, delay: delay))
+        self._backingState = StateObject(wrappedValue: BackingState(originalValue: wrappedValue, delay: delay))
     }
     
     var wrappedValue: Value {
@@ -59,12 +59,26 @@ struct DebouncedState<Value>: DynamicProperty {
         @Published var currentValue: TValue
         @Published var debouncedValue: TValue
         
+        private var cancellable: AnyCancellable?
+        
         init(originalValue: TValue, delay: Double) {
-            _currentValue = Published(initialValue: originalValue)
-            _debouncedValue = Published(initialValue: originalValue)
-            $currentValue
-                .debounce(for: .seconds(delay), scheduler: RunLoop.main)
-                .assign(to: &$debouncedValue)
+            self.currentValue = originalValue
+            self.debouncedValue = originalValue
+            
+            cancellable = $currentValue
+                .map { value -> AnyPublisher<TValue, Never> in
+                    if let str = value as? String, str.isEmpty {
+                        // Immediately emit empty strings
+                        return Just(value).eraseToAnyPublisher()
+                    } else {
+                        return Just(value)
+                            .delay(for: .seconds(delay), scheduler: RunLoop.main)
+                            .eraseToAnyPublisher()
+                    }
+                }
+                .switchToLatest()
+                .receive(on: RunLoop.main)
+                .assign(to: \.debouncedValue, on: self)
         }
     }
 }

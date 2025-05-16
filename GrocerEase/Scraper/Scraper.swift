@@ -10,6 +10,7 @@ import WebKit
 protocol Scraper: WKNavigationDelegate {
     var webView: WKWebView! { get set }
     var hiddenWindow: UIWindow? { get set }
+    static var shared: Self { get }
     
     func setupInvisibleWebView()
     

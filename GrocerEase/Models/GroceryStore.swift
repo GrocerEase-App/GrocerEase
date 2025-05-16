@@ -15,12 +15,19 @@ final class GroceryStore {
     var latitude: Double?
     var longitude: Double?
     var address: String?
+    var source: PriceSource
     
-    init(id: String, brand: String, latitude: Double? = nil, longitude: Double? = nil, address: String? = nil) {
+    init(id: String, brand: String, latitude: Double? = nil, longitude: Double? = nil, address: String? = nil, source: PriceSource) {
         self.id = id
         self.brand = brand
         self.latitude = latitude
         self.longitude = longitude
         self.address = address
+        self.source = source
+    }
+    
+    func search(for query: String) async throws -> [GroceryItem] {
+        // Object oriented programming at its finest :)
+        return try await source.scraper.shared.searchItems(query: query, storeId: id)
     }
 }

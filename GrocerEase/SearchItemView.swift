@@ -7,6 +7,48 @@
 
 import SwiftUI
 
+@Observable
+class SearchItemViewModel: ObservableObject {
+    
+    public var stores: [GroceryStore] = []
+    public var results: [GroceryItem] = []
+    public var status: String?
+    @ObservationIgnored private var latitude: Double? = UserDefaults.standard.object(forKey: "userLatitude") as? Double
+    @ObservationIgnored private var longitude: Double? = UserDefaults.standard.object(forKey: "userLongitude") as? Double
+    @ObservationIgnored private var radius: Double? = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double
+    
+    init() {
+        Task {
+            try? await fetchGroceryStores()
+        }
+    }
+    
+    private func fetchGroceryStores() async throws {
+        guard let latitude = latitude, let longitude = longitude, let radius = radius else {
+            throw "No location data available"
+        }
+        
+        for source in PriceSource.allCases {
+            status = "Finding \(source.rawValue) Stores"
+            let sourceStores = try? await source.scraper.shared.getNearbyStores(latitude: latitude, longitude: longitude, radius: radius)
+            stores.append(contentsOf: sourceStores ?? [])
+        }
+        status = nil
+    }
+    
+    func fetchSearchResults(for text: String) async throws {
+        if !text.isEmpty {
+            for store in stores {
+                status = "Searching \(store.brand) #\(store.id)"
+                results.append(contentsOf: try await store.search(for: text))
+            }
+        } else {
+            results = []
+        }
+        status = nil
+    }
+}
+
 struct SearchItemView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var groceryList: [GroceryItem]
@@ -14,15 +56,13 @@ struct SearchItemView: View {
     // See Helpers/DebouncedState.swift for explanation
     @DebouncedState(delay: 0.75) private var searchText: String = ""
     @State private var isSearching: Bool = false
-    @State private var searchStore: GroceryStore?
-    @State private var loadingText: String?
     
-    @State private var searchResults: [GroceryItem] = []
+    @StateObject private var viewModel: SearchItemViewModel = .init()
     
     var body: some View {
         NavigationView {
             
-            List(searchResults, id: \.id) { item in
+            List(viewModel.results, id: \.id) { item in
                 HStack {
                     if item.imageUrl != nil, let imageUrl = item.imageUrl {
                         AsyncImage(url: URL(string: imageUrl)!) { image in
@@ -48,43 +88,17 @@ struct SearchItemView: View {
             .listStyle(PlainListStyle())
             .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
             .onChange(of: searchText) {
-                // If search text is empty, clear the results
-                if searchText == "" {
-                    self.searchResults = []
-                    return
-                }
-                // Otherwise, make an async call to the Safeway Scraper
-                // Eventually, this will need to call ALL the scrapers at once in a succinct way
-                // Some will have to be called multiple times (e.g. Safeway on Mission and on Morrissey)
                 Task {
-                    do {
-                        loadingText = "Finding Albertsons Stores..."
-                        
-                        if let latitude = UserDefaults.standard.object(forKey: "userLatitude") as? Double,
-                           let longitude = UserDefaults.standard.object(forKey: "userLongitude") as? Double,
-                           let radius = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double {
-                            let stores = try await SafewayScraper.shared.getNearbyStores(latitude: latitude, longitude: longitude, radius: radius)
-                            // TODO: Handle no stores
-                            self.searchStore = stores.first!
-                            loadingText = "Searching \(self.searchStore?.brand ?? "") #\(self.searchStore?.id ?? "")"
-                            self.searchResults = try await SafewayScraper.shared.searchItems(query: searchText, storeId: self.searchStore!.id)
-                            
-                        }
-                        
-                        loadingText = nil
-                    } catch {
-                        print("❌ Failed: \(error)")
-                        loadingText = nil
-                    }
+                    try? await viewModel.fetchSearchResults(for: searchText)
                 }
             }
             .navigationTitle("New Item")
             .toolbar {
-                if loadingText != nil {
+                if let status = viewModel.status {
                     ToolbarItemGroup(placement: .bottomBar) {
                         HStack {
                             ProgressView()
-                            Text(loadingText ?? "Loading complete")
+                            Text(status)
                         }
                     }
                 }

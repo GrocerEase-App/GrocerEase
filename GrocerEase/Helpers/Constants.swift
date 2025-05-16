@@ -9,5 +9,13 @@ enum Constants {
     static let UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15"
 }
 
-
-
+enum PriceSource: String, CaseIterable, Codable {
+    case albertsons = "Albertsons"
+    
+    var scraper: Scraper.Type {
+        switch self {
+        case .albertsons:
+            return SafewayScraper.self
+        }
+    }
+}

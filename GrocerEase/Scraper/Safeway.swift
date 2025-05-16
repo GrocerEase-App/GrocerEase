@@ -11,7 +11,7 @@ import Alamofire
 import SwiftyJSON
 
 // Much simplified from previous commit!
-class SafewayScraper: NSObject, Scraper {
+final class SafewayScraper: NSObject, Scraper {
     
     var webView: WKWebView!
     var hiddenWindow: UIWindow?
@@ -32,7 +32,10 @@ class SafewayScraper: NSObject, Scraper {
     // Upon initialization, create the invisible web view.
     override init() {
         super.init()
-        setupInvisibleWebView()
+        DispatchQueue.main.async {
+            self.setupInvisibleWebView()
+        }
+        
     }
     
     // I'm not sure if this is the best way to do this. Sets up an async callback
@@ -179,7 +182,7 @@ class SafewayScraper: NSObject, Scraper {
             {
                 address = "\(line1), \(city), \(state), \(country) \(zipcode)"
             }
-            return GroceryStore(id: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address)
+            return GroceryStore(id: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons)
         }
         
         return stores
