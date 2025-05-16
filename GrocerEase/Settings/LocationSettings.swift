@@ -16,7 +16,7 @@ struct LocationSettings: View {
     @State private var locationDescription: String? = UserDefaults.standard.object(forKey: "userLocationDescription") as? String ?? "Not Set"
     @State private var radius: Double = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double ?? 10.0
     
-    var onLocationSelected: ((CLLocationCoordinate2D, Double) -> Void)?
+//    var onLocationSelected: ((CLLocationCoordinate2D, Double) -> Void)?
     
     var body: some View {
         NavigationStack {

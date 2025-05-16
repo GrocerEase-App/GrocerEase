@@ -7,14 +7,15 @@
 import SwiftUI
 
 struct EditItemView: View {
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
+//    @Environment(\.isPresented) var isPresented
     @Binding var groceryList: [GroceryItem]
-    var existingItem: GroceryItem? = nil 
+    var existingItem: GroceryItem? = nil
     var onSave: (() -> Void)? = nil
     
     @State private var itemName = ""
-    @State private var quantity = ""
-    @State private var price = ""
+    @State private var quantity: Double = 0.0
+    @State private var price: Double = 0.0
     @State private var store = ""
     
     var body: some View {
@@ -22,38 +23,27 @@ struct EditItemView: View {
         Form {
             Section(header: Text("Item Details")) {
                 TextField("Name", text: $itemName)
-                TextField("Quantity", text: $quantity)
-                TextField("Price", text: $price)
-                    .keyboardType(.decimalPad)
+                TextField("Quantity", value: $quantity, format: .number)
+                TextField("Price", value: $price, format: .number)
                 TextField("Store", text: $store)
             }
         }
         .navigationTitle(existingItem == nil ? "Add Item" : "Edit " + existingItem!.name)
         .toolbar {
-            if existingItem != nil {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    if let priceValue = Double(price) {
-                        if let existing = existingItem,
-                           let index = groceryList.firstIndex(where: { $0.id == existing.id }) {
-                            groceryList[index].name = itemName
-                            groceryList[index].quantity = quantity
-                            groceryList[index].price = priceValue
-                            groceryList[index].store = store
-                        } else {
-                            let newItem = GroceryItem(name: itemName, quantity: quantity, price: priceValue, store: store)
-                            groceryList.append(newItem)
-                        }
-                        onSave?()
-                        dismiss()
+                    if let existing = existingItem,
+                       let index = groceryList.firstIndex(where: { $0.id == existing.id }) {
+                        groceryList[index].name = itemName
+                        groceryList[index].quantity = quantity
+                        groceryList[index].price = price
+                        groceryList[index].store = store
+                    } else {
+                        let newItem = GroceryItem(name: itemName, quantity: quantity, price: price, store: store)
+                        groceryList.append(newItem)
                     }
+                    onSave?()
+                    dismiss()
                 }
             }
         }
@@ -61,7 +51,7 @@ struct EditItemView: View {
             if let item = existingItem {
                 itemName = item.name
                 quantity = item.quantity
-                price = String(item.price)
+                price = item.price
                 store = item.store
             }
             

@@ -18,7 +18,7 @@ protocol Scraper: WKNavigationDelegate {
     
     func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore]
 
-    func searchItems(query: String, storeId: String) async throws -> [GroceryItem]
+    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem]
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!)
     

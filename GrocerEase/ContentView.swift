@@ -22,7 +22,7 @@ enum ListDirection: String, CaseIterable {
 struct ContentView: View {
     @State private var groceryList: [GroceryItem] = GroceryItem.samples
     @State private var showingSearchSheet = false
-    @State private var selectedItem: GroceryItem?
+//    @State private var selectedItem: GroceryItem?
     @State private var listOrder: ListOrder = .name
     @State private var listDirection: ListDirection = .ascending
     @State private var showingLocationSheet: Bool = false
@@ -63,31 +63,42 @@ struct ContentView: View {
         NavigationView {
             List {
                 ForEach(sortedGroceryList) { item in
-                    HStack {
-                        Button(action: {
-                            if let index = groceryList.firstIndex(where: { $0.id == item.id }) {
-                                groceryList[index].isCompleted.toggle()
+                    NavigationLink {
+                        EditItemView(groceryList: $groceryList, existingItem: item, onSave: nil)
+                    } label: {
+                        HStack {
+                            Button(action: {
+                                if let index = groceryList.firstIndex(where: { $0.id == item.id }) {
+                                    groceryList[index].isCompleted.toggle()
+                                }
+                            }) {
+                                Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
                             }
-                        }) {
-                            Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
+                            .imageScale(.large)
+                            .padding(.trailing)
+                            .buttonStyle(BorderlessButtonStyle())
+                            
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                    .strikethrough(item.isCompleted, color: .gray)
+                                Text("$\(String(format: "%.2f", item.price)) at \(item.store)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            
                         }
-                        .imageScale(.large)
-                        .padding(.trailing)
-                        .buttonStyle(BorderlessButtonStyle())
-                        
-                        VStack(alignment: .leading) {
-                            Text(item.name)
-                                .strikethrough(item.isCompleted, color: .gray)
-                            Text("$\(String(format: "%.2f", item.price)) at \(item.store)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        .onTapGesture {
-                            selectedItem = item
+                    }
+                    
+
+                }
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        let itemToDelete = sortedGroceryList[index]
+                        if let originalIndex = groceryList.firstIndex(where: { $0.id == itemToDelete.id }) {
+                            groceryList.remove(at: originalIndex)
                         }
                     }
                 }
-                .onDelete(perform: deleteItem)
             }
             .navigationTitle("GrocerEase")
             .toolbar {
@@ -106,24 +117,11 @@ struct ContentView: View {
                     }
                 }
             }
-            .sheet(item: $selectedItem) { item in
-                NavigationView {
-                    EditItemView(groceryList: $groceryList, existingItem: item) {
-                        selectedItem = nil
-                    }
-                }
-                
-            }
             .sheet(isPresented: $showingSearchSheet) {
                 SearchItemView(groceryList: $groceryList)
             }
             .sheet(isPresented: $showingLocationSheet) {
-                LocationSettings { coord, radius in
-                    print(coord, radius)
-                    UserDefaults.standard.set(coord.latitude, forKey: "userLatitude")
-                    UserDefaults.standard.set(coord.longitude, forKey: "userLongitude")
-                    UserDefaults.standard.set(radius, forKey: "userSearchRadius")
-                }
+                LocationSettings()
             }
             .alert("Setup Incomplete", isPresented: $showingAlert) {
                 Button("Configure Location") {

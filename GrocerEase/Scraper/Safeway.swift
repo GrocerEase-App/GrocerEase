@@ -52,7 +52,7 @@ final class SafewayScraper: NSObject, Scraper {
         }
     }
     
-    func searchItems(query: String, storeId: String) async throws -> [GroceryItem] {
+    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
         // Make sure subscription key is present
         do {
             try await loadInitialPage()
@@ -85,7 +85,7 @@ final class SafewayScraper: NSObject, Scraper {
             URLQueryItem(name: "rows", value: "30"),
             URLQueryItem(name: "start", value: "0"),
             URLQueryItem(name: "search-type", value: "keyword"),
-            URLQueryItem(name: "storeid", value: storeId),
+            URLQueryItem(name: "storeid", value: store.id),
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "sort", value: ""),
             URLQueryItem(name: "dvid", value: "web-4.1search"),
@@ -121,7 +121,27 @@ final class SafewayScraper: NSObject, Scraper {
         // This will need to be heavily expanded once we've finalized the GroceryItem model
         let products = apiResponse["primaryProducts"]["response"]["docs"].arrayValue
         let items = products.map { product in
-            return GroceryItem(name: product["name"].stringValue, price: product["price"].doubleValue, imageUrl: product["imageUrl"].stringValue)
+            let newItem = GroceryItem(name: product["name"].stringValue)
+            newItem.upc = product["upc"].stringValue
+            newItem.sku = product["pid"].stringValue
+            newItem.snap = product["snapEligible"].boolValue
+            newItem.locationShort = product["aisleLocation"].stringValue
+            // newItem.locationLong = "\(product[""])" tbh i dont even know what to put here
+            // safeway literally has inch by inch coordinates of where the product is located
+            newItem.inStock = product["inventoryAvailable"].stringValue == "1"
+            newItem.price = product["price"].doubleValue
+            newItem.unitPrice = product["pricePer"].doubleValue
+            newItem.originalPrice = product["basePrice"].doubleValue
+            newItem.originalUnitPrice = product["basePricePer"].doubleValue
+            newItem.unitString = product["unitOfMeasure"].stringValue
+            newItem.max = product["maxPurchaseQty"].intValue
+            newItem.soldByWeight = product["sellByWeight"].stringValue == "P"
+            if let url = URL(string: product["imageUrl"].stringValue) {
+                newItem.imageUrl = url
+            }
+            newItem.store = store.brand
+            
+            return newItem
         }
         
         return items

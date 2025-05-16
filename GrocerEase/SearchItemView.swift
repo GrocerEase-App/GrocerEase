@@ -50,7 +50,7 @@ class SearchItemViewModel: ObservableObject {
 }
 
 struct SearchItemView: View {
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     @Binding var groceryList: [GroceryItem]
     @State private var showManualEntry = false
     // See Helpers/DebouncedState.swift for explanation
@@ -61,35 +61,45 @@ struct SearchItemView: View {
     
     var body: some View {
         NavigationView {
-            
-            List(viewModel.results, id: \.id) { item in
-                HStack {
-                    if item.imageUrl != nil, let imageUrl = item.imageUrl {
-                        AsyncImage(url: URL(string: imageUrl)!) { image in
-                            image.resizable()
-                                .frame(width: 50, height: 50)
-                        } placeholder: {
-                            ProgressView()
+            VStack {
+                if !viewModel.stores.isEmpty {
+                    List(viewModel.results, id: \.id) { item in
+                        NavigationLink {
+                            EditItemView(groceryList: $groceryList, existingItem: item) {
+                                showManualEntry = false
+                            }
+                        } label: {
+                            HStack {
+                                if let url = item.imageUrl {
+                                    AsyncImage(url: url) { image in
+                                        image.resizable()
+                                            .frame(width: 50, height: 50)
+                                    } placeholder: {
+                                        ProgressView()
+                                    }
+                                } else {
+                                    Rectangle()
+                                        .fill(Color.gray)
+                                        .frame(width: 50, height: 50)
+                                }
+                                
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                    Text("$" + String(format: "%.2f", item.price) + " at \(item.store)")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
-                    } else {
-                        Rectangle()
-                            .fill(Color.gray)
-                            .frame(width: 50, height: 50)
+                        
+                    }
+                    .listStyle(PlainListStyle())
+                    .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
+                    .onChange(of: searchText) {
+                        Task {
+                            try? await viewModel.fetchSearchResults(for: searchText)
+                        }
                     }
                     
-                    
-                    VStack(alignment: .leading) {
-                        Text(item.name)
-                        Text("$" + String(format: "%.2f", item.price) + " at Safeway")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .listStyle(PlainListStyle())
-            .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
-            .onChange(of: searchText) {
-                Task {
-                    try? await viewModel.fetchSearchResults(for: searchText)
                 }
             }
             .navigationTitle("New Item")

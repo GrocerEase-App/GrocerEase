@@ -28,6 +28,6 @@ final class GroceryStore {
     
     func search(for query: String) async throws -> [GroceryItem] {
         // Object oriented programming at its finest :)
-        return try await source.scraper.shared.searchItems(query: query, storeId: id)
+        return try await source.scraper.shared.searchItems(query: query, store: self)
     }
 }
