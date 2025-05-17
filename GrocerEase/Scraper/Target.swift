@@ -83,6 +83,11 @@ final class TargetScraper: NSObject, Scraper {
     }
     
     func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+        do {
+            try await loadInitialPage()
+        } catch {
+            throw error
+        }
         return []
     }
     
