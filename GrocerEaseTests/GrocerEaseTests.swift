@@ -13,7 +13,7 @@ struct GrocerEaseTests {
     @Test func testSearchSafeway() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let store = GroceryStore(id: "799", brand: "Safeway", source: .albertsons)
-        let results = try await GrocerEase.SafewayScraper.shared.searchItems(query: "chips", store: store)
+        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
         #expect(!results.isEmpty)
         
     }
@@ -21,7 +21,7 @@ struct GrocerEaseTests {
     @Test func testSearchTraderJoes() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let store = GroceryStore(id: "193", brand: "Trader Joe's", source: .traderjoes)
-        let results = try await GrocerEase.TraderJoesScraper.shared.searchItems(query: "chips", store: store)
+        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
         print(results)
         #expect(!results.isEmpty)
     }
