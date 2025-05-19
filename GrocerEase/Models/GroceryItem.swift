@@ -33,6 +33,9 @@ final class GroceryItem: Identifiable {
     var imageUrl: URL?
     var department: String? // TODO: change to enum
     var soldByWeight: Bool?
+    var expiration: Date? // date after which price is no longer valid,
+    
+    var equivalentItems: [GroceryItem]?
     
     var unit: Unit? {
         if let unitString = self.unitString {
@@ -49,6 +52,7 @@ final class GroceryItem: Identifiable {
         self.store = store
         self.timestamp = .now
         self.isCompleted = false
+        self.expiration = Calendar.current.date(byAdding: .day, value: 7, to: Date())
     }
 }
 

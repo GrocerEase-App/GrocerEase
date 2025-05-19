@@ -11,14 +11,14 @@ enum Constants {
 
 enum PriceSource: String, CaseIterable, Codable {
     case albertsons = "Albertsons"
-    case target = "Target"
+//    case target = "Target"
     
     var scraper: Scraper.Type {
         switch self {
         case .albertsons:
             return SafewayScraper.self
-        case .target:
-            return TargetScraper.self
+//        case .target:
+//            return TargetScraper.self
         }
     }
 }

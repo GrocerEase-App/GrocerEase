@@ -33,37 +33,39 @@ final class TargetScraper: NSObject, Scraper {
         if webView.url != initialUrl {
             return
         }
-
+        
         let js = """
         (function() {
-            const html = document.documentElement.innerHTML;
-            const apiMatch = html.match(/"apiKey":"(.*?)"/);
-            
-            return {
-                api: apiMatch ? apiMatch[1] : null
-            };
+            return document.documentElement.innerHTML;
         })()
         """
-
+        
         webView.evaluateJavaScript(js) { result, error in
             if let error = error {
                 self.setupContinuation?.resume(throwing: error)
                 return
             }
+            
+            guard let htmlString = result as? String else {
+                self.setupContinuation?.resume(throwing: "Couldn't parse Target homepage html")
+                return
+            }
+            
+            // Target has a few different API keys
+            // The one that appears the most is the one we need
+            let pattern = #"\\"apiKey\\":\\"(.*?)\\""#
+            let regex = try! NSRegularExpression(pattern: pattern)
+            let matches = regex.matches(in: htmlString, range: NSRange(htmlString.startIndex..., in: htmlString))
 
-            guard let dict = result as? [String: Any],
-                  let api = dict["api"] as? String else {
-//                if !self.firstLoadComplete {
-//                    self.firstLoadComplete = true
-//                    return
-//                } else {
-                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Target API keys")
-                    return
-//                }
+            let keys = matches.compactMap {
+                Range($0.range(at: 1), in: htmlString).map { String(htmlString[$0]) }
             }
 
-            self.apiKey = api
-            print(self.apiKey)
+            let mostCommon = keys.reduce(into: [:]) { counts, key in
+                counts[key, default: 0] += 1
+            }.max(by: { $0.value < $1.value })?.key
+            
+            self.apiKey = mostCommon
             self.setupContinuation?.resume(returning: ())
         }
     }
@@ -96,6 +98,6 @@ final class TargetScraper: NSObject, Scraper {
     }
     
     
- 
+    
     
 }
