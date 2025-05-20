@@ -25,5 +25,20 @@ struct GrocerEaseTests {
         print(results)
         #expect(!results.isEmpty)
     }
+    
+    @Test func testSearchTarget() async throws {
+        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+        let store = GroceryStore(id: "3410", brand: "Target", source: .target)
+        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
+        print(results.map{$0.name})
+        #expect(!results.isEmpty)
+    }
+    
+    @Test func findStoreTarget() async throws {
+        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+        let results = try await TargetScraper.shared.getNearbyStores(latitude: 0, longitude: 0, radius: 10 )
+        print(results.map{$0.address})
+        #expect(!results.isEmpty)
+    }
 
 }
