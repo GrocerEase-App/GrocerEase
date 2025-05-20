@@ -22,7 +22,7 @@ final class TraderJoesScraper: NSObject, Scraper {
     private var setupContinuation: CheckedContinuation<Void, Error>?
     
     // (example) maybe the site uses a bearer token
-    private var authToken: String?
+    private var authToken: Bool = false
     
     // MARK: – Init
     override init() {
@@ -32,7 +32,7 @@ final class TraderJoesScraper: NSObject, Scraper {
     
     // MARK: – Load initial page & grab token if needed
     func loadInitialPage() async throws {
-        if authToken != nil { return }
+        if authToken { return }
         return try await withCheckedThrowingContinuation { cont in
             self.setupContinuation = cont
             DispatchQueue.main.async {
@@ -43,26 +43,8 @@ final class TraderJoesScraper: NSObject, Scraper {
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard webView.url == initialUrl else { return }
-        
-        // 1) inject JS to pull out whatever token/key Trader Joe’s embeds
-        let jsGrabber = """
-        (function() {
-          // e.g. window.__API_TOKEN__ or extract from meta tags or localStorage
-          return window.__TJ_API_TOKEN__ || null;
-        })()
-        """
-        webView.evaluateJavaScript(jsGrabber) { result, error in
-            if let err = error {
-                self.setupContinuation?.resume(throwing: err)
-                return
-            }
-            if let token = result as? String {
-                self.authToken = token
-                self.setupContinuation?.resume(returning: ())
-            } else {
-                self.setupContinuation?.resume(throwing: "Couldn’t find Trader Joe’s auth token")
-            }
-        }
+        authToken = true
+        self.setupContinuation?.resume(returning: ())
     }
     
     // MARK: – Search items
