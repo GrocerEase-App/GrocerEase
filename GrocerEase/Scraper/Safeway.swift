@@ -119,8 +119,8 @@ final class SafewayScraper: NSObject, Scraper {
         
         // Map the products to a list of GroceryItems
         // This will need to be heavily expanded once we've finalized the GroceryItem model
-        let products = apiResponse["primaryProducts"]["response"]["docs"].arrayValue
-        let items = products.map { product in
+        let products = apiResponse["primaryProducts"]["response"]["docs"].arrayValue.enumerated()
+        let items = products.map { i, product in
             let newItem = GroceryItem(name: product["name"].stringValue)
             newItem.upc = product["upc"].stringValue
             newItem.sku = product["pid"].stringValue
@@ -140,6 +140,7 @@ final class SafewayScraper: NSObject, Scraper {
                 newItem.imageUrl = url
             }
             newItem.store = store.brand
+            newItem.searchRank = i
             
             return newItem
         }

@@ -45,6 +45,7 @@ class SearchItemViewModel: ObservableObject {
         } else {
             results = []
         }
+        results.sort { $0.searchRank ?? 0 < $1.searchRank ?? 1 }
         status = nil
     }
 }

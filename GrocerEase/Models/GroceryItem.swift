@@ -36,8 +36,8 @@ final class GroceryItem: Identifiable {
     var expiration: Date? // date after which price is no longer valid,
     var url: URL?
     var brand: String?
-    var equivalentItems: [GroceryItem]?
     var weight: Double?
+    var searchRank: Int?
     
     var unit: Unit? {
         if let unitString = self.unitString {

@@ -61,8 +61,8 @@ final class TraderJoesScraper: NSObject, Scraper {
             .serializingDecodable(JSON.self)
             .value
         
-        let items = json["data"]["products"]["items"].arrayValue
-        return items.map { doc in
+        let items = json["data"]["products"]["items"].arrayValue.enumerated()
+        return items.map { i, doc in
             let item = GroceryItem(name: doc["item_title"].stringValue)
             item.upc     = doc["upc"].string
             item.sku = doc["sku"].string
@@ -81,6 +81,7 @@ final class TraderJoesScraper: NSObject, Scraper {
             item.url = URL(string: "https://www.traderjoes.com/\(doc["url_key"].stringValue)")
             item.imageUrl = URL(string: "https://www.traderjoes.com\(doc["primary_image"].stringValue)")
             item.store = store.brand
+            item.searchRank = i
             return item
         }
     }
@@ -88,6 +89,6 @@ final class TraderJoesScraper: NSObject, Scraper {
     
     // MARK: – Nearby stores
     func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
-        return []
+        return [GroceryStore(id: "193", brand: "Trader Joe's", source: .traderjoes)]
     }
 }

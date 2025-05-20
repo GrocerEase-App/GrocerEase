@@ -239,8 +239,8 @@ final class TargetScraper: NSObject, Scraper {
         // Map the products to a list of GroceryItems
         // This will need to be heavily expanded once we've finalized the GroceryItem model
         // Target.com parser — mirrors your Safeway mapping style
-        let products = apiResponse["data"]["search"]["products"].arrayValue
-        let items = products.map { product in
+        let products = apiResponse["data"]["search"]["products"].arrayValue.enumerated()
+        let items = products.map { i, product in
             let newItem = GroceryItem(
                 name: product["item"]["product_description"]["title"].stringValue
             )
@@ -284,6 +284,7 @@ final class TargetScraper: NSObject, Scraper {
             
             // --- Store brand -------------------------------------------------------
             newItem.store = store.brand
+            newItem.searchRank = i
             
             return newItem
         }
