@@ -90,11 +90,206 @@ final class TargetScraper: NSObject, Scraper {
         } catch {
             throw error
         }
-        return []
+        
+        guard let apiKey = self.apiKey else {
+            throw "Target subscription key not found"
+        }
+        
+        guard let visitorCookie = await webView.getAllCookiesAsync().first(where: {
+            $0.name == "visitorId" &&
+            $0.domain.contains("target.com")
+        }) else {
+            throw "No visitor_id found."
+        }
+        let visitorId = visitorCookie.value
+        
+        let baseURLString = "https://redsky.target.com/redsky_aggregations/v1/web/nearby_stores_v1"
+
+        var components = URLComponents(string: baseURLString)
+        components?.queryItems = [
+            URLQueryItem(name: "limit", value: "20"),
+            URLQueryItem(name: "within", value: "\(Int(radius))"),
+            URLQueryItem(name: "place", value: "95064"),
+            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "visitor_id", value: visitorId),
+            URLQueryItem(name: "channel", value: "WEB"),
+            URLQueryItem(name: "page", value: "/")
+            
+        ]
+        
+        guard let finalUrl = components?.url else {
+            throw "Couldn't generate search URL in Safeway Scraper"
+        }
+        var request = URLRequest(url: finalUrl)
+        
+        let headers: [String: String] = [
+            "Accept": "application/json, text/plain, */*",
+            "User-Agent": Constants.UserAgent
+        ]
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let cookies: [HTTPCookie] = await webView.getAllCookiesAsync()
+        for (key, value) in HTTPCookie.requestHeaderFields(with: cookies) {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+        
+        let stores = apiResponse["data"]["nearby_stores"]["stores"].arrayValue.map { store in
+            // ---------- Build full address ----------
+            var address: String? = nil
+            if let line1   = store["mailing_address"]["address_line1"].string,
+               let city    = store["mailing_address"]["city"].string,
+               let state   = store["mailing_address"]["region"].string,  // “CA”
+               let country = store["mailing_address"]["country_code"].string,
+               let zip     = store["mailing_address"]["postal_code"].string
+            {
+                address = "\(line1), \(city), \(state), \(country) \(zip)"
+            }
+            
+            // ---------- Return GroceryStore ----------
+            return GroceryStore(
+                id:      store["store_id"].stringValue,        // e.g. "3410"
+                brand:   "Target",   // e.g. "Scotts Valley"
+                address: address,
+                source:  .target                               // update to your enum case
+            )
+        }
+
+        return stores
     }
     
     func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
-        throw "Not implemented"
+        
+        // Make sure subscription key is present
+        do {
+            try await loadInitialPage()
+        } catch {
+            throw error
+        }
+        
+        guard let apiKey = self.apiKey else {
+            throw "Target subscription key not found"
+        }
+        
+        // Set up API call
+        // Unlike previous commit, we are building the request ourselves.
+        // This method is more prone to issues if Safeway decides to update their
+        // API, but makes calls a lot faster on our end.
+        let baseURLString = "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2"
+        
+        // Find the cookie named "visitor_id" for target.com
+        guard let visitorCookie = await webView.getAllCookiesAsync().first(where: {
+            $0.name == "visitorId" &&
+            $0.domain.contains("target.com")
+        }) else {
+            throw "No visitor_id found."
+        }
+        let visitorId = visitorCookie.value
+        
+        
+        // Add query params
+        var components = URLComponents(string: baseURLString)
+        components?.queryItems = [
+            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "channel", value: "WEB"),
+            URLQueryItem(name: "count", value: "24"),
+            URLQueryItem(name: "default_purchasability_filter", value: "true"),
+            URLQueryItem(name: "include_review_summarization", value: "true"),
+            URLQueryItem(name: "keyword", value: query),
+            URLQueryItem(name: "new_search", value: "true"),
+            URLQueryItem(name: "offset", value: "0"),
+            URLQueryItem(name: "page", value: "/s/\(query)"),
+            URLQueryItem(name: "platform", value: "desktop"),
+            URLQueryItem(name: "pricing_store_id", value: store.id),
+            URLQueryItem(name: "scheduled_delivery_store_id", value: store.id),
+            URLQueryItem(name: "spellcheck", value: "true"),
+            URLQueryItem(name: "store_ids", value: store.id),
+            URLQueryItem(name: "useragent", value: Constants.UserAgent),
+            URLQueryItem(name: "visitor_id", value: visitorId),
+            URLQueryItem(name: "zip", value: "95064")
+        ]
+        
+        // Finalize URL
+        guard let finalUrl = components?.url else {
+            throw "Couldn't generate search URL in Target Scraper"
+        }
+        var request = URLRequest(url: finalUrl)
+        
+        // Add headers to request
+        let headers: [String: String] = [
+            "Accept": "application/json, text/plain, */*",
+            "User-Agent": Constants.UserAgent
+        ]
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        // Add cookies to request
+        let cookies: [HTTPCookie] = await webView.getAllCookiesAsync()
+        for (key, value) in HTTPCookie.requestHeaderFields(with: cookies) {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        // Execute the request using this beautiful combination of Alamofire and SwiftyJSON
+        let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+    
+        // Map the products to a list of GroceryItems
+        // This will need to be heavily expanded once we've finalized the GroceryItem model
+        // Target.com parser — mirrors your Safeway mapping style
+        let products = apiResponse["data"]["search"]["products"].arrayValue
+        let items = products.map { product in
+            let newItem = GroceryItem(
+                name: product["item"]["product_description"]["title"].stringValue
+            )
+            
+            // --- Identifiers -------------------------------------------------------
+            newItem.upc = nil                                   // Target feed has no UPC
+            newItem.sku = product["tcin"].stringValue
+            newItem.plu = nil                                   // Not applicable
+            
+            // --- SNAP eligibility --------------------------------------------------
+            newItem.snap = product["item"]["compliance"]["is_snap_eligible"].boolValue
+            
+            // --- Location (not in this endpoint) -----------------------------------
+            newItem.locationShort = nil
+            newItem.locationLong = nil   // No precise coordinates
+            
+            // --- Inventory status --------------------------------------------------
+            newItem.inStock = nil                               // Stock not returned
+            
+            // --- Pricing -----------------------------------------------------------
+            newItem.price = product["price"]["current_retail"].doubleValue
+            newItem.unitPrice = nil                             // No unit-price field
+            newItem.originalPrice = product["price"]["reg_retail"].doubleValue
+            newItem.originalUnitPrice = nil
+            newItem.unitString = nil                            // Assume “each” if nil
+            
+            // --- Limits / sales units ---------------------------------------------
+            newItem.max = nil                                   // No max-purchase key
+            newItem.soldByWeight = nil                          // Not indicated
+            
+            // --- Image -------------------------------------------------------------
+            if let urlString = product["item"]["enrichment"]["images"]["primary_image_url"].string,
+               let url = URL(string: urlString) {
+                newItem.imageUrl = url
+            }
+            
+            // --- Department (optional mapping) -------------------------------------
+            if let deptId = product["item"]["merchandise_classification"]["department_id"].int {
+                newItem.department = String(deptId)             // Map to enum if desired
+            }
+            
+            // --- Store brand -------------------------------------------------------
+            newItem.store = store.brand
+            
+            return newItem
+        }
+
+            
+        return items
     }
     
     
