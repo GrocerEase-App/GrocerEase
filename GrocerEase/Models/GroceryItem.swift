@@ -34,7 +34,8 @@ final class GroceryItem: Identifiable {
     var department: String? // TODO: change to enum
     var soldByWeight: Bool?
     var expiration: Date? // date after which price is no longer valid,
-    
+    var url: URL?
+    var brand: String?
     var equivalentItems: [GroceryItem]?
     
     var unit: Unit? {
