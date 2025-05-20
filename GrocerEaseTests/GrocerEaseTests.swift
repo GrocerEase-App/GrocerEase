@@ -8,7 +8,6 @@
 import Testing
 @testable import GrocerEase
 import Foundation
-import TinyGraphQL
 
 struct GrocerEaseTests {
 

@@ -61,17 +61,25 @@ final class TraderJoesScraper: NSObject, Scraper {
             .serializingDecodable(JSON.self)
             .value
         
-        print("TJ raw JSON →", json)
-        
-        let items = json["data"]["products"]["items"].arrayValue  // ← match TJ’s JSON key
+        let items = json["data"]["products"]["items"].arrayValue
         return items.map { doc in
-            let item = GroceryItem(name: doc["name"].stringValue)
-            item.upc     = doc["upc"].stringValue
-            item.price   = doc["price"].doubleValue
-            item.inStock = doc["inventoryAvailable"].boolValue
-            if let url = URL(string: doc["imageUrl"].stringValue) {
-                item.imageUrl = url
+            let item = GroceryItem(name: doc["item_title"].stringValue)
+            item.upc     = doc["upc"].string
+            item.sku = doc["sku"].string
+            item.inStock = doc["availability"].string == "1"
+            item.price   = doc["price_range"]["minimum_price"]["final_price"]["value"].doubleValue
+            item.unitString = doc["sales_uom_description"].string
+            item.weight = doc["sales_size"].double
+            if let weight = item.weight {
+                item.unitPrice = item.price / weight
             }
+            if let categories = doc["category_hierarchy"].array {
+                let names = categories.map { $0["name"].stringValue }
+                item.department = names.last
+            }
+            item.soldByWeight = false
+            item.url = URL(string: "https://www.traderjoes.com/\(doc["url_key"].stringValue)")
+            item.imageUrl = URL(string: "https://www.traderjoes.com\(doc["primary_image"].stringValue)")
             item.store = store.brand
             return item
         }

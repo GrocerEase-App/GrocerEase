@@ -37,6 +37,7 @@ final class GroceryItem: Identifiable {
     var url: URL?
     var brand: String?
     var equivalentItems: [GroceryItem]?
+    var weight: Double?
     
     var unit: Unit? {
         if let unitString = self.unitString {
