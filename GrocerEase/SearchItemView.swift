@@ -52,8 +52,6 @@ class SearchItemViewModel: ObservableObject {
 
 struct SearchItemView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var groceryList: [GroceryItem]
-    @State private var showManualEntry = false
     // See Helpers/DebouncedState.swift for explanation
     @DebouncedState(delay: 0.75) private var searchText: String = ""
     @State private var isSearching: Bool = false
@@ -66,27 +64,14 @@ struct SearchItemView: View {
                 if !viewModel.stores.isEmpty {
                     List(viewModel.results, id: \.id) { item in
                         NavigationLink {
-                            EditItemView(groceryList: $groceryList, existingItem: item) {
-                                showManualEntry = false
-                            }
+                            EditItemView(item: item)
                         } label: {
                             HStack {
-                                if let url = item.imageUrl {
-                                    AsyncImage(url: url) { image in
-                                        image.resizable()
-                                            .frame(width: 50, height: 50)
-                                    } placeholder: {
-                                        ProgressView()
-                                    }
-                                } else {
-                                    Rectangle()
-                                        .fill(Color.gray)
-                                        .frame(width: 50, height: 50)
-                                }
+                                ProductImage(url: item.imageUrl)
                                 
                                 VStack(alignment: .leading) {
                                     Text(item.name)
-                                    Text("$" + String(format: "%.2f", item.price) + " at \(item.store)")
+                                    Text("$" + String(format: "%.2f", item.price ?? 0.0) + " at \(item.store)")
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -116,9 +101,8 @@ struct SearchItemView: View {
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
-                        EditItemView(groceryList: $groceryList, existingItem: nil) {
-                            showManualEntry = false
-                        }
+                        Text("hey!")
+//                        EditItemView(item: nil)
                     } label: {
                         Image(systemName: "pencil")
                     }

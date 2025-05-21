@@ -121,7 +121,7 @@ final class SafewayScraper: NSObject, Scraper {
         // This will need to be heavily expanded once we've finalized the GroceryItem model
         let products = apiResponse["primaryProducts"]["response"]["docs"].arrayValue.enumerated()
         let items = products.map { i, product in
-            let newItem = GroceryItem(name: product["name"].stringValue)
+            let newItem = GroceryItem(name: product["name"].stringValue, storeRef: store)
             newItem.upc = product["upc"].stringValue
             newItem.sku = product["pid"].stringValue
             newItem.snap = product["snapEligible"].boolValue
@@ -133,9 +133,10 @@ final class SafewayScraper: NSObject, Scraper {
             newItem.unitPrice = product["pricePer"].doubleValue
             newItem.originalPrice = product["basePrice"].doubleValue
             newItem.originalUnitPrice = product["basePricePer"].doubleValue
-            newItem.unitString = product["unitOfMeasure"].stringValue
+            newItem.unitString = product["unitQuantity"].stringValue
             newItem.max = product["maxPurchaseQty"].intValue
-            newItem.soldByWeight = product["sellByWeight"].stringValue == "P"
+            newItem.soldByWeight = product["sellByWeight"].stringValue != "I"
+            newItem.department = product["departmentName"].string
             if let url = URL(string: product["imageUrl"].stringValue) {
                 newItem.imageUrl = url
             }
@@ -199,7 +200,7 @@ final class SafewayScraper: NSObject, Scraper {
                let city = store["address"]["city"].string,
                let state = store["address"]["state"].string,
                let country = store["address"]["country"].string,
-               let zipcode = store["address"]["zip"].string
+               let zipcode = store["address"]["zipcode"].string
             {
                 address = "\(line1), \(city), \(state), \(country) \(zipcode)"
             }

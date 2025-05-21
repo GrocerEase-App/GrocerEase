@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 enum ListOrder: String, CaseIterable {
     case name = "Name"
@@ -20,7 +21,9 @@ enum ListDirection: String, CaseIterable {
 }
 
 struct ContentView: View {
-    @State private var groceryList: [GroceryItem] = GroceryItem.samples
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: [SortDescriptor(\GroceryItem.price, order: .reverse), SortDescriptor(\GroceryItem.name)]) var groceryList: [GroceryItem]
+//    @State private var groceryList: [GroceryItem] = GroceryItem.samples
     @State private var showingSearchSheet = false
 //    @State private var selectedItem: GroceryItem?
     @State private var listOrder: ListOrder = .name
@@ -50,7 +53,7 @@ struct ContentView: View {
             case .date:
                 return $0.timestamp < $1.timestamp
             case .price:
-                return $0.price < $1.price
+                return $0.price ?? 0.0 < $1.price ?? 0.0
             case .store:
                 return $0.store < $1.store
             }
@@ -64,7 +67,7 @@ struct ContentView: View {
             List {
                 ForEach(sortedGroceryList) { item in
                     NavigationLink {
-                        EditItemView(groceryList: $groceryList, existingItem: item, onSave: nil)
+                        EditItemView(item: item)
                     } label: {
                         HStack {
                             Button(action: {
@@ -81,7 +84,7 @@ struct ContentView: View {
                             VStack(alignment: .leading) {
                                 Text(item.name)
                                     .strikethrough(item.isCompleted, color: .gray)
-                                Text("$\(String(format: "%.2f", item.price)) at \(item.store)")
+                                Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store)")
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
                             }
@@ -93,10 +96,12 @@ struct ContentView: View {
                 }
                 .onDelete { indexSet in
                     for index in indexSet {
-                        let itemToDelete = sortedGroceryList[index]
-                        if let originalIndex = groceryList.firstIndex(where: { $0.id == itemToDelete.id }) {
-                            groceryList.remove(at: originalIndex)
-                        }
+                        let item = groceryList[index]
+                        modelContext.delete(item)
+//                        let itemToDelete = sortedGroceryList[index]
+//                        if let originalIndex = groceryList.firstIndex(where: { $0.id == itemToDelete.id }) {
+//                            groceryList.remove(at: originalIndex)
+//                        }
                     }
                 }
             }
@@ -118,7 +123,7 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingSearchSheet) {
-                SearchItemView(groceryList: $groceryList)
+                SearchItemView()
             }
             .sheet(isPresented: $showingLocationSheet) {
                 LocationSettings()
@@ -137,10 +142,6 @@ struct ContentView: View {
             
             
         }
-    }
-    
-    func deleteItem(at offsets: IndexSet) {
-        groceryList.remove(atOffsets: offsets)
     }
 }
 

@@ -242,7 +242,7 @@ final class TargetScraper: NSObject, Scraper {
         let products = apiResponse["data"]["search"]["products"].arrayValue.enumerated()
         let items = products.map { i, product in
             let newItem = GroceryItem(
-                name: product["item"]["product_description"]["title"].stringValue
+                name: product["item"]["product_description"]["title"].stringValue, storeRef: store
             )
             
             // --- Identifiers -------------------------------------------------------

@@ -93,7 +93,7 @@ final class WholeFoodsScraper: NSObject, Scraper {
         let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
         let products = apiResponse["results"].arrayValue
         let items = products.map { product in
-            let newItem = GroceryItem(name: product["name"].stringValue)
+            let newItem = GroceryItem(name: product["name"].stringValue, storeRef: store)
             newItem.price = product["regularPrice"].doubleValue
             newItem.url = product["slug"].url
             newItem.brand = product["brand"].stringValue
