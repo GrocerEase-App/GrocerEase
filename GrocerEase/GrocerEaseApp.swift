@@ -12,7 +12,7 @@ import SwiftData
 struct GrocerEaseApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
-        }.modelContainer(for: GroceryItem.self)
+            ListsView()
+        }.modelContainer(for: GroceryList.self)
     }
 }

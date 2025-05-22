@@ -85,7 +85,7 @@ final class SafewayScraper: NSObject, Scraper {
             URLQueryItem(name: "rows", value: "30"),
             URLQueryItem(name: "start", value: "0"),
             URLQueryItem(name: "search-type", value: "keyword"),
-            URLQueryItem(name: "storeid", value: store.id),
+            URLQueryItem(name: "storeid", value: store.storeNum),
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "sort", value: ""),
             URLQueryItem(name: "dvid", value: "web-4.1search"),
@@ -121,11 +121,11 @@ final class SafewayScraper: NSObject, Scraper {
         // This will need to be heavily expanded once we've finalized the GroceryItem model
         let products = apiResponse["primaryProducts"]["response"]["docs"].arrayValue.enumerated()
         let items = products.map { i, product in
-            let newItem = GroceryItem(name: product["name"].stringValue, storeRef: store)
+            let newItem = GroceryItem(name: product["name"].stringValue, store: store)
             newItem.upc = product["upc"].stringValue
             newItem.sku = product["pid"].stringValue
             newItem.snap = product["snapEligible"].boolValue
-            newItem.locationShort = product["aisleLocation"].stringValue
+            newItem.location = product["aisleLocation"].stringValue
             // newItem.locationLong = "\(product[""])" tbh i dont even know what to put here
             // safeway literally has inch by inch coordinates of where the product is located
             newItem.inStock = product["inventoryAvailable"].stringValue == "1"
@@ -140,7 +140,6 @@ final class SafewayScraper: NSObject, Scraper {
             if let url = URL(string: product["imageUrl"].stringValue) {
                 newItem.imageUrl = url
             }
-            newItem.store = store.brand
             newItem.searchRank = i
             
             return newItem
@@ -150,7 +149,7 @@ final class SafewayScraper: NSObject, Scraper {
         
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
         // Make sure subscription key is present
         do {
             try await loadInitialPage()
@@ -204,7 +203,7 @@ final class SafewayScraper: NSObject, Scraper {
             {
                 address = "\(line1), \(city), \(state), \(country) \(zipcode)"
             }
-            return GroceryStore(id: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons)
+            return GroceryStore(storeNum: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons, list: list)
         }
         
         return stores

@@ -16,7 +16,7 @@ struct MainMenu: View {
         Menu {
             Text("Show Completed")
             
-            Button("Choose Location") {
+            Button("List Settings") {
                 showingPopover = true
             }
 

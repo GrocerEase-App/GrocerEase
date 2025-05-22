@@ -7,104 +7,177 @@
 
 import SwiftUI
 
-@Observable
-class SearchItemViewModel: ObservableObject {
-    
-    public var stores: [GroceryStore] = []
-    public var results: [GroceryItem] = []
-    public var status: String?
-    @ObservationIgnored private var latitude: Double? = UserDefaults.standard.object(forKey: "userLatitude") as? Double
-    @ObservationIgnored private var longitude: Double? = UserDefaults.standard.object(forKey: "userLongitude") as? Double
-    @ObservationIgnored private var radius: Double? = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double
-    
-    init() {
-        Task {
-            try? await fetchGroceryStores()
-        }
-    }
-    
-    private func fetchGroceryStores() async throws {
-        guard let latitude = latitude, let longitude = longitude, let radius = radius else {
-            throw "No location data available"
-        }
-        
-        for source in PriceSource.allCases {
-            status = "Finding \(source.rawValue) Stores"
-            let sourceStores = try? await source.scraper.shared.getNearbyStores(latitude: latitude, longitude: longitude, radius: radius)
-            stores.append(contentsOf: sourceStores ?? [])
-        }
-        status = nil
-    }
-    
-    func fetchSearchResults(for text: String) async throws {
-        if !text.isEmpty {
-            for store in stores {
-                status = "Searching \(store.brand) #\(store.id)"
-                results.append(contentsOf: try await store.search(for: text))
-            }
-        } else {
-            results = []
-        }
-        results.sort { $0.searchRank ?? 0 < $1.searchRank ?? 1 }
-        status = nil
-    }
-}
-
 struct SearchItemView: View {
     @Environment(\.dismiss) private var dismiss
     // See Helpers/DebouncedState.swift for explanation
     @DebouncedState(delay: 0.75) private var searchText: String = ""
     @State private var isSearching: Bool = false
+    @State var list: GroceryList
     
-    @StateObject private var viewModel: SearchItemViewModel = .init()
+    @State private var status: String?
+    var onSave: ((GroceryItem) -> Void)?
+    
+    @State private var groupedResults: [[GroceryItem]] = []
+
+    func fetchSearchResults(for text: String) async throws {
+        var allItems: [GroceryItem] = []
+
+        if !text.isEmpty {
+            for store in list.stores.filter({ $0.enabled }) {
+                status = "Searching \(store.brand) #\(store.storeNum)"
+                let items = try await store.search(for: text)
+                allItems.append(contentsOf: items)
+            }
+        }
+
+        status = nil
+        
+        var parent = Array(0..<allItems.count)
+
+        // Union-Find helpers
+        func find(_ x: Int) -> Int {
+            if parent[x] != x {
+                parent[x] = find(parent[x]) // path compression
+            }
+            return parent[x]
+        }
+
+        func union(_ x: Int, _ y: Int) {
+            let rootX = find(x)
+            let rootY = find(y)
+            if rootX != rootY {
+                parent[rootY] = rootX
+            }
+        }
+
+        // Step 2: Build lookup tables
+        var upcMap: [String: Int] = [:]
+        var pluMap: [String: Int] = [:]
+        var skuBrandMap: [String: Int] = [:]
+        var nameMap: [String: Int] = [:]
+
+        for (index, item) in allItems.enumerated() {
+            if let upc = item.upc {
+                if let existing = upcMap[upc] {
+                    union(index, existing)
+                } else {
+                    upcMap[upc] = index
+                }
+            }
+            if let plu = item.plu {
+                if let existing = pluMap[plu] {
+                    union(index, existing)
+                } else {
+                    pluMap[plu] = index
+                }
+            }
+            if let sku = item.sku {
+                let key = "\(item.store.brand)|\(sku)"
+                if let existing = skuBrandMap[key] {
+                    union(index, existing)
+                } else {
+                    skuBrandMap[key] = index
+                }
+            }
+            if !item.name.isEmpty {
+                if let existing = nameMap[item.name] {
+                    union(index, existing)
+                } else {
+                    nameMap[item.name] = index
+                }
+            }
+        }
+        
+
+        // Step 3: Group by root parent
+        var clusters: [Int: [GroceryItem]] = [:]
+        for (index, item) in allItems.enumerated() {
+            let root = find(index)
+            clusters[root, default: []].append(item)
+        }
+
+        // Step 4: Sort each group by item name or rank if needed, then sort outer array by rank of first item
+        groupedResults = clusters.values.map { group in
+            group.sorted { ($0.searchRank ?? 0) < ($1.searchRank ?? 0) }
+        }.sorted {
+            ($0.first?.searchRank ?? 0) < ($1.first?.searchRank ?? 0)
+        }
+    }
+
     
     var body: some View {
+        let allItems = groupedResults.flatMap { $0 }
+        let minPrice = allItems.compactMap(\.price).min()
+        let minUnitPrice = allItems.compactMap(\.unitPrice).min()
+        
         NavigationView {
             VStack {
-                if !viewModel.stores.isEmpty {
-                    List(viewModel.results, id: \.id) { item in
-                        NavigationLink {
-                            EditItemView(item: item)
-                        } label: {
-                            HStack {
-                                ProductImage(url: item.imageUrl)
-                                
-                                VStack(alignment: .leading) {
-                                    Text(item.name)
-                                    Text("$" + String(format: "%.2f", item.price ?? 0.0) + " at \(item.store)")
-                                        .foregroundStyle(.secondary)
+                if !list.stores.isEmpty {
+                    List {
+                        ForEach(groupedResults, id: \.first?.id) { group in
+                            if let item = group.first {
+                                NavigationLink {
+                                    if group.count == 1 {
+                                        EditItemView(item: item) {
+                                            onSave?($0)
+                                            dismiss()
+                                        }
+                                    } else {
+                                        SelectStoreView(group: group) { item in
+                                            self.onSave?(item)
+                                            dismiss()
+                                        }
+                                    }
+                                } label: {
+                                    if let cheapest = group.compactMap({ $0.price != nil ? $0 : nil }).min(by: { $0.price! < $1.price! }) {
+                                        HStack {
+                                            ProductImage(url: cheapest.imageUrl)
+
+                                            VStack(alignment: .leading) {
+                                                Text(item.name)
+
+                                                let otherCount = group.count - 1
+                                                let othersText = otherCount > 0 ? " + \(otherCount) others" : ""
+
+                                                HStack(spacing: 4) {
+                                                    if let price = item.price {
+                                                        Text(String(format: "$%.2f each", price))
+                                                            .foregroundStyle(price == minPrice ? .green : .secondary)
+                                                    }
+
+                                                    if let unitPrice = item.unitPrice {
+                                                        Text("(" + String(format: "$%.2f / %@", unitPrice, item.unitString ?? "each") + ")")
+                                                            .foregroundStyle(unitPrice == minUnitPrice ? .green : .secondary)
+                                                    }
+                                                }
+
+                                                Text("at \(item.store.brand)\(othersText)")
+                                                    .foregroundStyle(.secondary)
+                                            }
+
+                                        }
+                                    }
                                 }
                             }
                         }
-                        
                     }
                     .listStyle(PlainListStyle())
                     .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
                     .onChange(of: searchText) {
                         Task {
-                            try? await viewModel.fetchSearchResults(for: searchText)
+                            try? await fetchSearchResults(for: searchText)
                         }
                     }
-                    
                 }
             }
             .navigationTitle("New Item")
             .toolbar {
-                if let status = viewModel.status {
+                if let status = status {
                     ToolbarItemGroup(placement: .bottomBar) {
                         HStack {
                             ProgressView()
                             Text(status)
                         }
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        Text("hey!")
-//                        EditItemView(item: nil)
-                    } label: {
-                        Image(systemName: "pencil")
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -115,6 +188,7 @@ struct SearchItemView: View {
             }
         }
     }
+
 }
 
 //#Preview {

@@ -44,7 +44,7 @@ struct LocationSearchView: View {
     @DebouncedState private var searchText: String = ""
     @Environment(\.dismiss) var dismiss
     
-    var onLocationSelected: (CLLocationCoordinate2D, String) -> Void
+    var onLocationSelected: (CLLocationCoordinate2D, String, String?) -> Void
     
     var body: some View {
         VStack {
@@ -76,7 +76,7 @@ struct LocationSearchView: View {
                                                    placemark.country]
                                         .compactMap { $0 }
                                         .joined(separator: ", ")
-                                    self.onLocationSelected(location.placemark.coordinate, address)
+                                    self.onLocationSelected(location.placemark.coordinate, address, placemark.postalCode)
                                     dismiss()
                                 }
                             }
@@ -103,7 +103,7 @@ struct LocationSearchView: View {
 
 #Preview {
     NavigationView {
-        LocationSearchView { _,_ in}
+        LocationSearchView { _,_,_  in}
     }
 }
 

@@ -9,6 +9,7 @@ import UIKit
 import WebKit
 import Alamofire
 import SwiftyJSON
+import HTMLEntities
 
 final class TargetScraper: NSObject, Scraper {
     
@@ -84,7 +85,7 @@ final class TargetScraper: NSObject, Scraper {
         }
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
         do {
             try await loadInitialPage()
         } catch {
@@ -101,6 +102,11 @@ final class TargetScraper: NSObject, Scraper {
         }) else {
             throw "No visitor_id found."
         }
+        
+        guard let zip = list.zipcode else {
+            throw "Zip code required for Target scraper"
+        }
+        
         let visitorId = visitorCookie.value
         
         let baseURLString = "https://redsky.target.com/redsky_aggregations/v1/web/nearby_stores_v1"
@@ -109,7 +115,7 @@ final class TargetScraper: NSObject, Scraper {
         components?.queryItems = [
             URLQueryItem(name: "limit", value: "20"),
             URLQueryItem(name: "within", value: "\(Int(radius))"),
-            URLQueryItem(name: "place", value: "95064"),
+            URLQueryItem(name: "place", value: zip),
             URLQueryItem(name: "key", value: apiKey),
             URLQueryItem(name: "visitor_id", value: visitorId),
             URLQueryItem(name: "channel", value: "WEB"),
@@ -151,10 +157,10 @@ final class TargetScraper: NSObject, Scraper {
             
             // ---------- Return GroceryStore ----------
             return GroceryStore(
-                id:      store["store_id"].stringValue,        // e.g. "3410"
+                storeNum:      store["store_id"].stringValue,        // e.g. "3410"
                 brand:   "Target",   // e.g. "Scotts Valley"
                 address: address,
-                source:  .target                               // update to your enum case
+                source:  .target, list: list                               // update to your enum case
             )
         }
 
@@ -189,6 +195,9 @@ final class TargetScraper: NSObject, Scraper {
         }
         let visitorId = visitorCookie.value
         
+        guard let zip = store.list?.zipcode else {
+            throw "Zip Code required for Target Scraper"
+        }
         
         // Add query params
         var components = URLComponents(string: baseURLString)
@@ -203,13 +212,13 @@ final class TargetScraper: NSObject, Scraper {
             URLQueryItem(name: "offset", value: "0"),
             URLQueryItem(name: "page", value: "/s/\(query)"),
             URLQueryItem(name: "platform", value: "desktop"),
-            URLQueryItem(name: "pricing_store_id", value: store.id),
-            URLQueryItem(name: "scheduled_delivery_store_id", value: store.id),
+            URLQueryItem(name: "pricing_store_id", value: store.storeNum),
+            URLQueryItem(name: "scheduled_delivery_store_id", value: store.storeNum),
             URLQueryItem(name: "spellcheck", value: "true"),
-            URLQueryItem(name: "store_ids", value: store.id),
+            URLQueryItem(name: "store_ids", value: store.storeNum),
             URLQueryItem(name: "useragent", value: Constants.UserAgent),
             URLQueryItem(name: "visitor_id", value: visitorId),
-            URLQueryItem(name: "zip", value: "95064")
+            URLQueryItem(name: "zip", value: zip)
         ]
         
         // Finalize URL
@@ -242,7 +251,7 @@ final class TargetScraper: NSObject, Scraper {
         let products = apiResponse["data"]["search"]["products"].arrayValue.enumerated()
         let items = products.map { i, product in
             let newItem = GroceryItem(
-                name: product["item"]["product_description"]["title"].stringValue, storeRef: store
+                name: product["item"]["product_description"]["title"].stringValue.htmlUnescape(), store: store
             )
             
             // --- Identifiers -------------------------------------------------------
@@ -254,8 +263,7 @@ final class TargetScraper: NSObject, Scraper {
             newItem.snap = product["item"]["compliance"]["is_snap_eligible"].boolValue
             
             // --- Location (not in this endpoint) -----------------------------------
-            newItem.locationShort = nil
-            newItem.locationLong = nil   // No precise coordinates
+            newItem.location = nil
             
             // --- Inventory status --------------------------------------------------
             newItem.inStock = nil                               // Stock not returned
@@ -283,7 +291,6 @@ final class TargetScraper: NSObject, Scraper {
             }
             
             // --- Store brand -------------------------------------------------------
-            newItem.store = store.brand
             newItem.searchRank = i
             
             return newItem

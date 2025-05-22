@@ -6,25 +6,27 @@
 //
 import SwiftUI
 
-//struct EBTBadge: View {
-//    var body: some View {
-//        
-//    }
-//}
+struct LittleBadge: View {
+    var text: String
+    var color: Color = .green
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(.white)
+            .padding(.vertical, 3)
+            .padding(.horizontal, 5)
+            .background(color)
+            .cornerRadius(5)
+    }
+}
 
 struct EditItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var modelContext
     var item: GroceryItem
+    var onSave: ((GroceryItem) -> Void)?
     
     var body: some View {
-        let EBTBadge = Text("SNAP")
-            .font(.caption)
-            .foregroundStyle(.white)
-            .padding(.vertical, 3)
-            .padding(.horizontal, 5)
-            .background(.green)
-            .cornerRadius(5)
         
         Form {
             Section(header: Text("Item Details")) {
@@ -53,7 +55,7 @@ struct EditItemView: View {
                     }.padding(5)
                     if item.snap ?? false {
                         Spacer()
-                        EBTBadge
+                        LittleBadge(text: "SNAP")
                     }
                 }
                 
@@ -99,8 +101,8 @@ struct EditItemView: View {
                     print("hi")
                 } label: {
                     VStack(alignment: .leading) {
-                        Text("\(item.storeRef.brand) #\(item.storeRef.id)")
-                        if let address = item.storeRef.address {
+                        Text("\(item.store.brand) #\(item.store.storeNum)")
+                        if let address = item.store.address {
                             Text(address).foregroundStyle(.secondary).font(.caption)
                         }
                     }
@@ -114,15 +116,11 @@ struct EditItemView: View {
                     }
                 }
                 
-                if item.locationShort != nil || item.locationLong != nil {
+                if let location = item.location {
                     HStack {
                         Text("Location")
                         Spacer()
-                        if let locationLong = item.locationLong {
-                            Text(locationLong).foregroundStyle(.secondary)
-                        } else if let locationShort = item.locationShort {
-                            Text(locationShort).foregroundStyle(.secondary)
-                        }
+                        Text(location).foregroundStyle(.secondary)
                     }
                     
                 }
@@ -181,10 +179,11 @@ struct EditItemView: View {
             
         }
         .navigationTitle("Review Item")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    modelContext.insert(item)
+                    onSave?(item)
                     dismiss()
                 }
             }
@@ -194,6 +193,6 @@ struct EditItemView: View {
 
 #Preview {
     NavigationView {
-        EditItemView(item: GroceryItem.sample)
+//        EditItemView(item: GroceryItem.sample)
     }
 }

@@ -12,19 +12,19 @@ import SwiftData
 final class GroceryItem: Identifiable {
     var id = UUID()
     var name: String
-    var quantity: Double // TODO: change to Double
+    var quantity: Double
     var timestamp: Date
     var isCompleted: Bool
-    var store: String // TODO: change to GroceryStore reference
-    @Relationship(deleteRule: .noAction) var storeRef: GroceryStore
-    @Relationship(deleteRule: .cascade) var subItems: [GroceryItem] = []
+    var list: GroceryList?
+    var parent: GroceryItem?
+    @Relationship(deleteRule: .noAction) var store: GroceryStore
+    @Relationship(deleteRule: .cascade, inverse: \GroceryItem.parent) var trackedItems: [GroceryItem] = []
     
     var upc: String? // universal barcode for branded items
     var sku: String? // store-specific product identifier
     var plu: String? // non brand-specific item identifier
     var snap: Bool? // EBT eligible
-    var locationShort: String? // short description of item location
-    var locationLong: String? // long description of item location
+    var location: String? // description of item location (such as aisle number)
     var inStock: Bool?
     var price: Double? // if sold by weight, this value should be approx price per package or item (if applicable)
     var unitPrice: Double?
@@ -57,38 +57,38 @@ final class GroceryItem: Identifiable {
         }
     }
     
-    init(name: String, storeRef: GroceryStore) {
+    init(name: String, store: GroceryStore, listRef: GroceryList? = nil) {
         self.name = name
         self.quantity = 1.0
         self.price = 1.0
-        self.store = "Default"
         self.timestamp = .now
         self.isCompleted = false
-        self.storeRef = storeRef
+        self.store = store
+        self.list = listRef
     }
 }
 
 extension GroceryItem {
     static let samples: [GroceryItem] = [
-        .sample
+//        .sample
     ]
     
-    static var sample: GroceryItem {
-        let item = GroceryItem(name: "Lucky Charms Cereal Frosted Toasted Oat With Marshmallows - 10.5 Oz", storeRef: GroceryStore(id: "123", brand: "Safeway", address: "123 Main St", source: .albertsons))
-        item.upc = "000000000000"
-        item.sku = "12345"
-        item.plu = "1000"
-        item.snap = true
-        item.locationShort = "Aisle 5"
-        item.department = "Breakfast & Cereal"
-        item.inStock = true
-        item.imageUrl = URL(string: "https://images.albertsons-media.com/is/image/ABS/970125858")!
-        item.price = 4.20
-        item.unitPrice = 0.231
-        item.originalPrice = 4.20
-        item.originalUnitPrice = 0.231
-        item.soldByWeight = false
-        item.unitString = "OZ"
-        return item
-    }
+//    static var sample: GroceryItem {
+//        let item = GroceryItem(name: "Lucky Charms Cereal Frosted Toasted Oat With Marshmallows - 10.5 Oz", storeRef: GroceryStore(storeNum: "123", brand: "Safeway", address: "123 Main St", source: .albertsons))
+//        item.upc = "000000000000"
+//        item.sku = "12345"
+//        item.plu = "1000"
+//        item.snap = true
+//        item.locationShort = "Aisle 5"
+//        item.department = "Breakfast & Cereal"
+//        item.inStock = true
+//        item.imageUrl = URL(string: "https://images.albertsons-media.com/is/image/ABS/970125858")!
+//        item.price = 4.20
+//        item.unitPrice = 0.231
+//        item.originalPrice = 4.20
+//        item.originalUnitPrice = 0.231
+//        item.soldByWeight = false
+//        item.unitString = "OZ"
+//        return item
+//    }
 }

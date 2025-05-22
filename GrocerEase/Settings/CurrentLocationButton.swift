@@ -13,7 +13,7 @@ import MapKit
 
 struct CurrentLocationButton: View {
     @StateObject private var locationManager = LocationManager()
-    var onLocationSelected: (CLLocationCoordinate2D, String) -> Void
+    var onLocationSelected: (CLLocationCoordinate2D, String, String?) -> Void
     
     var body: some View {
         Button(action: {
@@ -36,7 +36,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var locationServicesDenied = false
     @Published var isRequesting = false
     
-    var onLocationSelected: ((CLLocationCoordinate2D, String) -> Void)?
+    var onLocationSelected: ((CLLocationCoordinate2D, String, String?) -> Void)?
     
     override init() {
         super.init()
@@ -50,7 +50,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    func requestCurrentLocation(onLocationSelected: ((CLLocationCoordinate2D, String) -> Void)? = nil) {
+    func requestCurrentLocation(onLocationSelected: ((CLLocationCoordinate2D, String, String?) -> Void)? = nil) {
         let status = manager.authorizationStatus
         
         switch status {
@@ -95,13 +95,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     .compactMap { $0 }
                     .joined(separator: ", ")
                 DispatchQueue.main.async {
-                    self.onLocationSelected?(location.coordinate, address)
+                    self.onLocationSelected?(location.coordinate, address, placemark.postalCode)
                 }
                 
             } else if let error = error {
                 print(error)
                 DispatchQueue.main.async {
-                    self.onLocationSelected?(location.coordinate, "\(location.coordinate.latitude), \(location.coordinate.longitude)")
+                    self.onLocationSelected?(location.coordinate, "\(location.coordinate.latitude), \(location.coordinate.longitude)", nil)
                 }
             }
         }
@@ -115,5 +115,5 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
 
 #Preview {
-    CurrentLocationButton(onLocationSelected: {_,_ in })
+    CurrentLocationButton(onLocationSelected: {_,_,_ in })
 }

@@ -8,101 +8,199 @@
 import SwiftUI
 import CoreLocation
 import MapKit
+import SwiftData
 
 struct LocationSettings: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var toggleOn: Bool = true
-    @State private var coordinates: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: UserDefaults.standard.object(forKey: "userLatitude") as? Double ?? 0.0, longitude: UserDefaults.standard.object(forKey: "userLongitude") as? Double ?? 0.0)
-    @State private var locationDescription: String? = UserDefaults.standard.object(forKey: "userLocationDescription") as? String ?? "Not Set"
-    @State private var radius: Double = UserDefaults.standard.object(forKey: "userSearchRadius") as? Double ?? 10.0
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.editMode) var editMode
     
-//    var onLocationSelected: ((CLLocationCoordinate2D, Double) -> Void)?
+    @State var list: GroceryList
+    @State var newList: Bool
+    @State var loadingStores = false
+    
+    func move(from source: IndexSet, to destination: Int) {
+        list.stores.move(fromOffsets: source, toOffset: destination)
+    }
+    
+    init(list: GroceryList? = nil) {
+        if let list = list {
+            self.list = list
+            newList = false
+        } else {
+            self.list = GroceryList()
+            newList = true
+        }
+    }
+    
+    private func fetchStores() {
+        guard list.location != nil else { return }
+        Task {
+            loadingStores = true
+            try? await list.fetchStores()
+            loadingStores = false
+        }
+    }
     
     var body: some View {
-        NavigationStack {
-            List {
+        
+        Form {
+            
+            Section("List Details") {
+                HStack {
+                    Text("Name")
+                    TextField("New List", text: $list.name)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            if newList {
                 Section {
                     NavigationLink {
-                        LocationSearchView { coords, desc in
-                            coordinates = coords
-                            locationDescription = desc
+                        LocationSearchView { coords, desc, zip in
+                            list.location = coords
+                            list.address = desc
+                            list.zipcode = zip
+                            fetchStores()
                         }
                     } label: {
                         HStack {
                             Text("Location")
                             Spacer()
-                            Text(locationDescription ?? "Not Set")
+                            Text(list.address ?? "Not Set")
                                 .foregroundStyle(.secondary)
-                         
+                            
                         }
                     }
                     
                     VStack(alignment: .leading) {
                         HStack() {
                             Text("Radius")
-//                            TextField("", value: $radius, format: .number)
-//                                .multilineTextAlignment(.trailing)
-//                                .onSubmit {
-//                                    if radius < 1 {
-//                                        radius = 1
-//                                    } else if radius > 100 {
-//                                        radius = 100
-//                                    }
-//                                }
-//                                .foregroundStyle(.secondary)
                             Spacer()
-                            Text("\(String(format: "%.0f", radius)) miles")
+                            Text("\(String(format: "%.0f", list.radius)) mile" + (list.radius == 1 ? "" : "s"))
                                 .foregroundStyle(.secondary)
                         }
                         
-                        Slider(value: $radius, in: 1...100, step: 1)
+                        Slider(value: $list.radius, in: 1...50, step: 1, onEditingChanged: { value in
+                            if !value {
+                                fetchStores()
+                            }
+                        }).disabled((loadingStores))
                     }
+                    
+
                 } header: {
                     Text("Location")
                 } footer: {
-                    Text("Choose an origin location, such as your home, and a search radius to find nearby stores. Distance will be taken into consideration when calculating the most cost efficient store to visit.")
+                    Text("Choose an origin location, such as your home, and a search radius to find nearby stores. Distance will be taken into consideration when calculating the most cost efficient store to visit. This location will be shared with stores. This cannot be changed later.")
                 }
-                
-                Section {
-                    ForEach(["Safeway", "Trader Joe's", "Target", "CVS", "Costco", "Whole Foods"].sorted(), id: \.self) { store in
-                        HStack {
-                            Toggle(isOn: $toggleOn) {
-                                Text(store)
-                            }
-                        }
-                    }
-                    
-                } header: {
-                    Text("Stores")
-                } footer: {
-                    Text("Store selection not yet implemented.")
-                }
-            }
-            .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        UserDefaults.standard.set(coordinates?.latitude, forKey: "userLatitude")
-                        UserDefaults.standard.set(coordinates?.longitude, forKey: "userLongitude")
-                        UserDefaults.standard.set(radius, forKey: "userSearchRadius")
-                        UserDefaults.standard.set(locationDescription, forKey: "userLocationDescription")
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            } else {
+                Section("Location") {
+                    Text("Showing stores within \(String(format: "%.0f", list.radius)) mile\(list.radius == 1 ? "" : "s") of \(list.address ?? "unknown")")
                 }
             }
             
+            
+            
+            
+            Section("Shopping Preferences") {
+                VStack(alignment: .leading) {
+                    HStack() {
+                        Text("Maximum stores to visit")
+                        Spacer()
+                        Text(list.maxStores == 0 ? "Unlimited" : "\(list.maxStores)")
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Slider(value: .convert($list.maxStores), in: 0...10, step: 1)
+                }
+                
+                Picker("Automatically select store when a product is found at multiple stores", selection: Binding(get: {
+                    list.autoSelect.rawValue
+                }, set: {
+                    list.autoSelect = AutoSelect(rawValue: $0)!
+                })) {
+                    ForEach(AutoSelect.allCases, id: \.rawValue) { index in
+                        Text(index.rawValue)
+                            }
+                        }
+//                        .pickerStyle(.segmented)
+            }
+            
+            Section {
+                if list.location == nil {
+                    Text("Select a location above to view stores")
+                } else if loadingStores {
+                    HStack {
+                        ProgressView()
+                        Text("Finding nearby stores...")
+                    }
+                } else if list.stores.isEmpty {
+                    Text("No stores found, please try a different location")
+                } else {
+                    ForEach(list.stores) { store in
+                        Toggle(isOn: Binding(
+                            get: { store.enabled },
+                            set: { newValue in
+                                store.enabled = newValue
+                            }
+                        )) {
+                            Button {
+                                print("hey")
+                            } label: {
+                                VStack(alignment: .leading) {
+                                    Text("\(store.brand) #\(store.storeNum) | \(String(format: "%.2f", store.distance ?? 0)) mile" + (store.distance ?? 0 == 1 ? "" : "s"))
+                                    if let address = store.address {
+                                        Text(address)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }.onMove(perform: move)
+                }
+            } header: {
+                HStack {
+                    Text("Stores").font(.footnote)
+                    Spacer()
+                    if !loadingStores && !list.stores.isEmpty {
+                        Button("Sort by distance") {
+                            list.stores.sort { $0.distance ?? 1000 < $1.distance ?? 1000 }
+                        }.font(.footnote)
+                        EditButton().font(.footnote)
+                    }
+                }.buttonStyle(BorderlessButtonStyle()).font(.caption)
+                
+            } footer: {
+                Text("Stores closer to the top of this list will be considered first when items are offered at the same price. If you disable a store, it will not be searched, but existing items will not be removed.")
+            }
+        }
+        .navigationTitle(list.name == "" ? "New List" : list.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    if newList {
+                        modelContext.insert(list)
+                    }
+                    try? modelContext.save()
+                    dismiss()
+                }.disabled(list.invalidList)
+            }
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
         }
     }
 }
 
-
-
 #Preview {
-    LocationSettings()
+    NavigationView {
+        LocationSettings()
+    }
 }
-

@@ -44,7 +44,7 @@ final class WalmartScraper: NSObject, Scraper {
         }
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
         return []
     }
     

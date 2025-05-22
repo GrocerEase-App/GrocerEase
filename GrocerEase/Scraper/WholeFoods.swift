@@ -45,7 +45,7 @@ final class WholeFoodsScraper: NSObject, Scraper {
         }
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double) async throws -> [GroceryStore] {
+    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
         return []
     }
     
@@ -65,7 +65,7 @@ final class WholeFoodsScraper: NSObject, Scraper {
         var components = URLComponents(string: baseURLString)
         components?.queryItems = [
             URLQueryItem(name: "text", value: query),
-            URLQueryItem(name: "store", value: store.id),
+            URLQueryItem(name: "store", value: store.storeNum),
             URLQueryItem(name: "limit", value: "30"),
             URLQueryItem(name: "offset", value: "0")
         ]
@@ -93,7 +93,7 @@ final class WholeFoodsScraper: NSObject, Scraper {
         let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
         let products = apiResponse["results"].arrayValue
         let items = products.map { product in
-            let newItem = GroceryItem(name: product["name"].stringValue, storeRef: store)
+            let newItem = GroceryItem(name: product["name"].stringValue, store: store)
             newItem.price = product["regularPrice"].doubleValue
             newItem.url = product["slug"].url
             newItem.brand = product["brand"].stringValue

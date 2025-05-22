@@ -19,6 +19,7 @@ struct ProductImage: View {
                 AsyncImage(url: url) { image in
                     image.resizable()
                         .frame(width: size, height: size)
+                        .scaledToFit()
                 } placeholder: {
                     ProgressView()
                 }
