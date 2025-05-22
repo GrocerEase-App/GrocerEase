@@ -122,6 +122,7 @@ final class TraderJoesScraper: NSObject, Scraper {
         
         var request = try URLRequest(url: base, method: .post)
         request.setValue(Constants.UserAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSON(body).rawData()
         
         let json = try await AF.request(request)
@@ -130,13 +131,16 @@ final class TraderJoesScraper: NSObject, Scraper {
         
         if let stores = json["response"]["collection"].array {
             return stores.map { store in
-                let address = [
-                    store["address1"].stringValue,
-                    store["address2"].stringValue,
-                    store["city"].stringValue,
-                    store["state"].stringValue,
-                    store["postalcode"].stringValue
-                ].joined(separator: ", ")
+                
+                var address: String? = nil
+                
+                if let line1 = store["address1"].string,
+                   let line2 = store["address2"].string,
+                   let city = store["city"].string,
+                   let state = store["state"].string,
+                   let zip = store["postalcode"].string {
+                    address = String(line1: line1, line2: line2 == "" ? nil : line2, city: city, state: state, zip: zip, country: "USA")
+                }
                 
                 return GroceryStore(
                     storeNum: store["clientkey"].stringValue,

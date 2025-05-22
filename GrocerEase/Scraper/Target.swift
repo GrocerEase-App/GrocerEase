@@ -152,7 +152,7 @@ final class TargetScraper: NSObject, Scraper {
                let country = store["mailing_address"]["country_code"].string,
                let zip     = store["mailing_address"]["postal_code"].string
             {
-                address = "\(line1), \(city), \(state), \(country) \(zip)"
+                address = String(line1: line1, line2: nil, city: city, state: state, zip: zip, country: country)
             }
             
             // ---------- Return GroceryStore ----------

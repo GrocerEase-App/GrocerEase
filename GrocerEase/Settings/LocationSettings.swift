@@ -18,9 +18,22 @@ struct LocationSettings: View {
     @State var list: GroceryList
     @State var newList: Bool
     @State var loadingStores = false
+    @State var showingAlert = false
     
     func move(from source: IndexSet, to destination: Int) {
         list.stores.move(fromOffsets: source, toOffset: destination)
+    }
+    
+    func saveAndExit() {
+        if list.stores.filter({ $0.enabled }).count > 8 && !showingAlert {
+            showingAlert = true
+        } else {
+            if newList {
+                modelContext.insert(list)
+            }
+            try? modelContext.save()
+            dismiss()
+        }
     }
     
     init(list: GroceryList? = nil) {
@@ -183,11 +196,7 @@ struct LocationSettings: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    if newList {
-                        modelContext.insert(list)
-                    }
-                    try? modelContext.save()
-                    dismiss()
+                    saveAndExit()
                 }.disabled(list.invalidList)
             }
             ToolbarItem(placement: .cancellationAction) {
@@ -196,6 +205,14 @@ struct LocationSettings: View {
                 }
             }
         }
+        .alert("Too Many Stores", isPresented: $showingAlert, actions: {
+            Button("Continue Anyway", role: .destructive) {
+                saveAndExit()
+            }
+            Button("Reselect Stores", role: .cancel) {}
+        }, message: {
+            Text("Stores of the same brand within a close radius often have similar prices. The app will run faster if you only select a couple stores per brand.")
+        })
     }
 }
 

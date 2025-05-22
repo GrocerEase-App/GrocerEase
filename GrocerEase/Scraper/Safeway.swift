@@ -201,7 +201,7 @@ final class SafewayScraper: NSObject, Scraper {
                let country = store["address"]["country"].string,
                let zipcode = store["address"]["zipcode"].string
             {
-                address = "\(line1), \(city), \(state), \(country) \(zipcode)"
+                address = String(line1: line1, line2: nil, city: city, state: state, zip: zipcode, country: country)
             }
             return GroceryStore(storeNum: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons, list: list)
         }

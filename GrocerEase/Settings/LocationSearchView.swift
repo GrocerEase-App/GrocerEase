@@ -69,13 +69,7 @@ struct LocationSearchView: View {
                                 DispatchQueue.main.async {
                                     let location = response.mapItems.first!
                                     let placemark = location.placemark
-                                    let address = [placemark.name,
-                                                   placemark.locality,
-                                                   placemark.administrativeArea,
-                                                   placemark.postalCode,
-                                                   placemark.country]
-                                        .compactMap { $0 }
-                                        .joined(separator: ", ")
+                                    let address = placemark.formattedAddress
                                     self.onLocationSelected(location.placemark.coordinate, address, placemark.postalCode)
                                     dismiss()
                                 }

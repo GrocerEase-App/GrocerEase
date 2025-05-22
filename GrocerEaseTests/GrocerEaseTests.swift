@@ -66,5 +66,35 @@ struct GrocerEaseTests {
             #expect(Bool(false))
         }
     }
+    
+    @Test func addressPartsToString() async throws {
+        let formatted = String(
+            line1: "123 Main St",
+            line2: "Apt 4B",
+            city: "Boston",
+            state: "MA",
+            zip: "02118",
+            country: "USA"
+        )
+        #expect(formatted == "123 Main St Apt 4B, Boston, MA 02118, USA")
+    }
+    
+    @Test func placemarkToAddressString() async throws {
+        let geocoder = CLGeocoder()
+        let placemarks = try await geocoder.geocodeAddressString("1 Infinite Loop")
+        let placemark = placemarks.first
+        if let placemark = placemark {
+            #expect(placemark.formattedAddress == "1 Infinite Loop, Cupertino, CA 95014, United States")
+        }
+    }
+    
+    @Test func testGetTraderJoesStores() async throws {
+        // Inconsistent behavior: network request fails or receives unreadable response
+        // Cannot replicate outside simulator
+        let list: GroceryList = .sample
+        let stores = try await TraderJoesScraper.shared.getNearbyStores(latitude: list.location!.latitude, longitude: list.location!.longitude, radius: 10, list: list)
+        print(stores.map{$0.address})
+        #expect(!stores.isEmpty)
+    }
 
 }

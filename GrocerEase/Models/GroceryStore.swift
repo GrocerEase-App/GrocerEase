@@ -38,6 +38,7 @@ final class GroceryStore: Equatable {
             Task {
                 self.location = await CLLocationCoordinate2D(address: adr)
                 self.distance = self.location?.distanceInMiles(to: self.list!.location)
+                list.sortStores()
             }
         }
     }

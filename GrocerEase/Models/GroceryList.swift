@@ -40,7 +40,15 @@ final class GroceryList: Identifiable {
             newStores.append(contentsOf: try await scraper.getNearbyStores(latitude: location.latitude, longitude: location.longitude, radius: radius, list: self))
         }
         self.stores.append(contentsOf: newStores)
-        self.stores.sort { $0.distance ?? 1000 < $1.distance ?? 1000 }
+    }
+    
+    func sortStores() {
+        self.stores.sort { $0.distance ?? .greatestFiniteMagnitude < $1.distance ?? .greatestFiniteMagnitude }
+    }
+    
+    func save() {
+        modelContext?.insert(self)
+        try? modelContext?.save()
     }
 }
 
