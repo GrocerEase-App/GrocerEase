@@ -102,10 +102,8 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingSearchSheet) {
-            SearchItemView(list: list) {
-                $0.list = self.list
-                modelContext.insert($0)
-                try? modelContext.save()
+            SearchItemView(list: list) { item in
+                item.save()
             }
         }
         .sheet(isPresented: $showingLocationSheet) {

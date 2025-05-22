@@ -44,3 +44,13 @@ final class GroceryList: Identifiable {
     }
 }
 
+extension GroceryList {
+    static let sample: GroceryList = {
+        let list = GroceryList()
+        list.name = "Sample List"
+        list.location = CLLocationCoordinate2D(latitude: 37.000212813403806, longitude: -122.06235820026123) // Baskin Auditorium
+        list.zipcode = "95064"
+        list.address = "1156 High St Santa Cruz, CA 95064"
+        return list
+    }()
+}

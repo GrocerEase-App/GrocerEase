@@ -20,26 +20,33 @@ final class GroceryItem: Identifiable {
     @Relationship(deleteRule: .noAction) var store: GroceryStore
     @Relationship(deleteRule: .cascade, inverse: \GroceryItem.parent) var trackedItems: [GroceryItem] = []
     
+    // Item Info
+    var url: URL?
+    var imageUrl: URL?
+    var brand: String?
+    var searchRank: Int?
+    
+    // Pricing
+    var price: Double? // price per package or unit of the item (approx if sold by weight)
+    var unitPrice: Double? // price per unit of the item as described in unitString
+    var originalPrice: Double? // price when not on sale, if applicable
+    var originalUnitPrice: Double? // unit price when not on sale, if applicable
+    var unitString: String? // weight or volume unit of the item, assume each if nil
+    var unitQuantity: Double? // weight or volume of one package of this item
+    var expiration: Date? // date after which price is no longer valid
+    var soldByWeight: Bool? // TODO: change to enum (individual item, prepackaged, weighed at checkout)
+    
+    // Identifiers
     var upc: String? // universal barcode for branded items
     var sku: String? // store-specific product identifier
     var plu: String? // non brand-specific item identifier
+    
+    // Additional Info
     var snap: Bool? // EBT eligible
     var location: String? // description of item location (such as aisle number)
-    var inStock: Bool?
-    var price: Double? // if sold by weight, this value should be approx price per package or item (if applicable)
-    var unitPrice: Double?
-    var originalPrice: Double? // price when not on sale, if applicable
-    var originalUnitPrice: Double?
-    var unitString: String? // assume each if nil
-    var max: Int? // maximum purchase quantity
-    var imageUrl: URL?
     var department: String? // TODO: change to enum
-    var soldByWeight: Bool?
-    var expiration: Date? // date after which price is no longer valid,
-    var url: URL?
-    var brand: String?
-    var weight: Double?
-    var searchRank: Int?
+    var inStock: Bool? // TODO: change to enum (num left in stock, almost gone, etc.)
+    var max: Int? // maximum purchase quantity
     
     var unit: Unit? {
         if let unitString = self.unitString {
@@ -57,38 +64,44 @@ final class GroceryItem: Identifiable {
         }
     }
     
-    init(name: String, store: GroceryStore, listRef: GroceryList? = nil) {
+    init(name: String, store: GroceryStore) {
         self.name = name
         self.quantity = 1.0
         self.price = 1.0
         self.timestamp = .now
         self.isCompleted = false
         self.store = store
-        self.list = listRef
     }
+    
+    func save(to list: GroceryList? = nil) {
+        self.list = list ?? self.store.list
+        try? modelContext?.save()
+    }
+    
+    // TODO: Refresh price function
 }
 
 extension GroceryItem {
     static let samples: [GroceryItem] = [
-//        .sample
+        .sample
     ]
     
-//    static var sample: GroceryItem {
-//        let item = GroceryItem(name: "Lucky Charms Cereal Frosted Toasted Oat With Marshmallows - 10.5 Oz", storeRef: GroceryStore(storeNum: "123", brand: "Safeway", address: "123 Main St", source: .albertsons))
-//        item.upc = "000000000000"
-//        item.sku = "12345"
-//        item.plu = "1000"
-//        item.snap = true
-//        item.locationShort = "Aisle 5"
-//        item.department = "Breakfast & Cereal"
-//        item.inStock = true
-//        item.imageUrl = URL(string: "https://images.albertsons-media.com/is/image/ABS/970125858")!
-//        item.price = 4.20
-//        item.unitPrice = 0.231
-//        item.originalPrice = 4.20
-//        item.originalUnitPrice = 0.231
-//        item.soldByWeight = false
-//        item.unitString = "OZ"
-//        return item
-//    }
+    static var sample: GroceryItem {
+        let item = GroceryItem(name: "Lucky Charms Cereal Frosted Toasted Oat With Marshmallows - 10.5 Oz", store: .sample)
+        item.upc = "000000000000"
+        item.sku = "12345"
+        item.plu = "1000"
+        item.snap = true
+        item.location = "Aisle 5"
+        item.department = "Breakfast & Cereal"
+        item.inStock = true
+        item.imageUrl = URL(string: "https://images.albertsons-media.com/is/image/ABS/970125858")!
+        item.price = 4.20
+        item.unitPrice = 0.231
+        item.originalPrice = 4.20
+        item.originalUnitPrice = 0.231
+        item.soldByWeight = false
+        item.unitString = "OZ"
+        return item
+    }
 }

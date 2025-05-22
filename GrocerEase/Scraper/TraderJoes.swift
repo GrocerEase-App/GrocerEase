@@ -70,8 +70,8 @@ final class TraderJoesScraper: NSObject, Scraper {
             item.inStock = doc["availability"].string == "1"
             item.price   = doc["price_range"]["minimum_price"]["final_price"]["value"].doubleValue
             item.unitString = doc["sales_uom_description"].string
-            item.weight = doc["sales_size"].double
-            if let weight = item.weight, let price = item.price {
+            item.unitQuantity = doc["sales_size"].double
+            if let weight = item.unitQuantity, let price = item.price {
                 item.unitPrice = price / weight
             }
             if let categories = doc["category_hierarchy"].array {
