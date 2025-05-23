@@ -14,6 +14,7 @@ enum AutoSelect: String, CaseIterable, Codable {
     case none = "Off"
     case closest = "Closest"
     case cheapest = "Cheapest"
+    case custom = "Custom"
 }
 
 enum PriceSource: String, CaseIterable, Codable {

@@ -14,6 +14,7 @@ final class GroceryStore: Equatable {
     var id = UUID()
     var storeNum: String // store identifier
     var brand: String // store brand name
+    var sortOrder: Int = 0 // order within list
     
     var location: CLLocationCoordinate2D? // coordinates of store if available
     var address: String? // address of store if available
@@ -24,22 +25,23 @@ final class GroceryStore: Equatable {
     
     var list: GroceryList? // the list this store belongs to
     
-    init(storeNum: String, brand: String, location: CLLocationCoordinate2D? = nil, address: String? = nil, source: PriceSource, list: GroceryList) {
+    init(storeNum: String, brand: String, location: CLLocationCoordinate2D? = nil, address: String? = nil, source: PriceSource) {
         self.storeNum = storeNum
         self.brand = brand
         self.location = location
         self.address = address
         self.source = source
-        self.list = list
-        
-        self.distance = location?.distanceInMiles(to: self.list!.location)
-        
-        if location == nil, let adr = self.address {
-            Task {
-                self.location = await CLLocationCoordinate2D(address: adr)
-                self.distance = self.location?.distanceInMiles(to: self.list!.location)
-                list.sortStores()
-            }
+    }
+    
+    func setLocation() async {
+        if self.location == nil, let adr = self.address {
+            self.location = await CLLocationCoordinate2D(address: adr)
+        }
+    }
+    
+    func setDistance(from origin: CLLocationCoordinate2D) {
+        if let location = self.location {
+            self.distance = origin.distanceInMiles(to: location)
         }
     }
     
@@ -48,7 +50,7 @@ final class GroceryStore: Equatable {
     }
     
     func search(for query: String) async throws -> [GroceryItem] {
-        return try await scraper.searchItems(query: query, store: self)
+        return try await scraper.search(query, at: self)
     }
     
     static func == (lhs: GroceryStore, rhs: GroceryStore) -> Bool {
@@ -62,7 +64,6 @@ extension GroceryStore {
         brand: "Safeway",
         location: CLLocationCoordinate2D(latitude: 36.9821234, longitude: -122.0074933), // Safeway on Mission St
         address: "117 Morrissey Blvd, Santa Cruz, CA 95062",
-        source: .albertsons,
-        list: .sample
+        source: .albertsons
     )
 }

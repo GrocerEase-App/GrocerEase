@@ -9,6 +9,7 @@ import UIKit
 import WebKit
 import Alamofire
 import SwiftyJSON
+import CoreLocation
 
 // Much simplified from previous commit!
 final class SafewayScraper: NSObject, Scraper {
@@ -52,7 +53,49 @@ final class SafewayScraper: NSObject, Scraper {
         }
     }
     
-    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Ignore page loads unrelated to the initial request
+        if webView.url != initialUrl {
+            return
+        }
+
+        let js = """
+        (function() {
+            const html = document.documentElement.innerHTML;
+            const xapiMatch = html.match(/"xapiSubscriptionKey":"(.*?)"/);
+            const apimMatch = html.match(/"apimProgramSubscriptionKey":"(.*?)"/);
+            return {
+                xapi: xapiMatch ? xapiMatch[1] : null,
+                apim: apimMatch ? apimMatch[1] : null
+            };
+        })()
+        """
+
+        webView.evaluateJavaScript(js) { result, error in
+            if let error = error {
+                self.setupContinuation?.resume(throwing: error)
+                return
+            }
+
+            guard let dict = result as? [String: Any],
+                  let xapi = dict["xapi"] as? String,
+                  let apim = dict["apim"] as? String else {
+                if !self.firstLoadComplete {
+                    self.firstLoadComplete = true
+                    return
+                } else {
+                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Safeway API keys")
+                    return
+                }
+            }
+
+            self.xapiKey = xapi
+            self.apimKey = apim
+            self.setupContinuation?.resume(returning: ())
+        }
+    }
+    
+    func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         // Make sure subscription key is present
         do {
             try await loadInitialPage()
@@ -149,7 +192,7 @@ final class SafewayScraper: NSObject, Scraper {
         
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
+    func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore] {
         // Make sure subscription key is present
         do {
             try await loadInitialPage()
@@ -158,15 +201,15 @@ final class SafewayScraper: NSObject, Scraper {
         }
         
         guard let xapiKey = self.xapiKey else {
-            throw "Safeway subscription key not found"
+            throw "API key not set for Albertsons scraper."
         }
         
         let baseURLString = "https://www.safeway.com/abs/pub/xapi/storeresolver/v2/all"
 
         var components = URLComponents(string: baseURLString)
         components?.queryItems = [
-            URLQueryItem(name: "latitude", value: String(latitude)),
-            URLQueryItem(name: "longitude", value: String(longitude)),
+            URLQueryItem(name: "latitude", value: String(location.latitude)),
+            URLQueryItem(name: "longitude", value: String(location.longitude)),
             URLQueryItem(name: "excludeBanners", value: "none"),
             URLQueryItem(name: "size", value: "20"),
             URLQueryItem(name: "radius", value: String(radius))
@@ -203,52 +246,11 @@ final class SafewayScraper: NSObject, Scraper {
             {
                 address = String(line1: line1, line2: nil, city: city, state: state, zip: zipcode, country: country)
             }
-            return GroceryStore(storeNum: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons, list: list)
+            return GroceryStore(storeNum: store["locationId"].stringValue, brand: store["domainName"].stringValue, address: address, source: .albertsons)
         }
         
         return stores
         
     }
     
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // Ignore page loads unrelated to the initial request
-        if webView.url != initialUrl {
-            return
-        }
-
-        let js = """
-        (function() {
-            const html = document.documentElement.innerHTML;
-            const xapiMatch = html.match(/"xapiSubscriptionKey":"(.*?)"/);
-            const apimMatch = html.match(/"apimProgramSubscriptionKey":"(.*?)"/);
-            return {
-                xapi: xapiMatch ? xapiMatch[1] : null,
-                apim: apimMatch ? apimMatch[1] : null
-            };
-        })()
-        """
-
-        webView.evaluateJavaScript(js) { result, error in
-            if let error = error {
-                self.setupContinuation?.resume(throwing: error)
-                return
-            }
-
-            guard let dict = result as? [String: Any],
-                  let xapi = dict["xapi"] as? String,
-                  let apim = dict["apim"] as? String else {
-                if !self.firstLoadComplete {
-                    self.firstLoadComplete = true
-                    return
-                } else {
-                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Safeway API keys")
-                    return
-                }
-            }
-
-            self.xapiKey = xapi
-            self.apimKey = apim
-            self.setupContinuation?.resume(returning: ())
-        }
-    }
 }

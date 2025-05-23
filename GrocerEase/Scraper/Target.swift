@@ -10,6 +10,7 @@ import WebKit
 import Alamofire
 import SwiftyJSON
 import HTMLEntities
+import CoreLocation
 
 final class TargetScraper: NSObject, Scraper {
     
@@ -85,7 +86,7 @@ final class TargetScraper: NSObject, Scraper {
         }
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
+    func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore] {
         do {
             try await loadInitialPage()
         } catch {
@@ -103,7 +104,7 @@ final class TargetScraper: NSObject, Scraper {
             throw "No visitor_id found."
         }
         
-        guard let zip = list.zipcode else {
+        guard let zip = try await location.fetchZipCode() else {
             throw "Zip code required for Target scraper"
         }
         
@@ -160,14 +161,14 @@ final class TargetScraper: NSObject, Scraper {
                 storeNum:      store["store_id"].stringValue,        // e.g. "3410"
                 brand:   "Target",   // e.g. "Scotts Valley"
                 address: address,
-                source:  .target, list: list                               // update to your enum case
+                source:  .target                               // update to your enum case
             )
         }
 
         return stores
     }
     
-    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
+    func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         
         // Make sure subscription key is present
         do {

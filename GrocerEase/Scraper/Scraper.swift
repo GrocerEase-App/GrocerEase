@@ -6,6 +6,7 @@
 //
 
 import WebKit
+import CoreLocation
 
 protocol Scraper: WKNavigationDelegate {
     var webView: WKWebView! { get set }
@@ -16,15 +17,24 @@ protocol Scraper: WKNavigationDelegate {
     
     func loadInitialPage() async throws -> Void
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore]
+    func findStores(for list: GroceryList) async throws -> [GroceryStore]
+    
+    func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore]
 
-    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem]
+    func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem]
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!)
     
 }
 
 extension Scraper {
+    func findStores(for list: GroceryList) async throws -> [GroceryStore] {
+        guard let location = list.location else {
+            throw "Location not set before calling findStores(for:)"
+        }
+        return try await self.findStores(near: location, within: list.radius)
+    }
+    
     func setupInvisibleWebView() {
         let config = WKWebViewConfiguration()
         

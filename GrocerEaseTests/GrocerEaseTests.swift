@@ -15,8 +15,8 @@ struct GrocerEaseTests {
     @Test func testSearchSafeway() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let list = GroceryList()
-        let store = GroceryStore(storeNum: "799", brand: "Safeway", source: .albertsons, list: list)
-        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
+        let store = GroceryStore(storeNum: "799", brand: "Safeway", source: .albertsons)
+        let results = try await store.source.scraper.shared.search("chips", at: store)
         #expect(!results.isEmpty)
         
     }
@@ -24,8 +24,8 @@ struct GrocerEaseTests {
     @Test func testSearchTraderJoes() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let list = GroceryList()
-        let store = GroceryStore(storeNum: "193", brand: "Trader Joe's", source: .traderjoes, list: list)
-        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
+        let store = GroceryStore(storeNum: "193", brand: "Trader Joe's", source: .traderjoes)
+        let results = try await store.source.scraper.shared.search("chips", at: store)
         print(results)
         #expect(!results.isEmpty)
     }
@@ -33,16 +33,16 @@ struct GrocerEaseTests {
     @Test func testSearchTarget() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let list = GroceryList()
-        let store = GroceryStore(storeNum: "3410", brand: "Target", source: .target, list: list)
-        let results = try await store.source.scraper.shared.searchItems(query: "chips", store: store)
+        let store = GroceryStore(storeNum: "3410", brand: "Target", source: .target)
+        let results = try await store.source.scraper.shared.search("chips", at: store)
         print(results.map{$0.name})
         #expect(!results.isEmpty)
     }
     
     @Test func findStoreTarget() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        let list = GroceryList()
-        let results = try await TargetScraper.shared.getNearbyStores(latitude: 0, longitude: 0, radius: 10, list: list)
+        let list: GroceryList = .sample
+        let results = try await TargetScraper.shared.findStores(for: list)
         print(results.map{$0.address})
         #expect(!results.isEmpty)
     }
@@ -92,7 +92,7 @@ struct GrocerEaseTests {
         // Inconsistent behavior: network request fails or receives unreadable response
         // Cannot replicate outside simulator
         let list: GroceryList = .sample
-        let stores = try await TraderJoesScraper.shared.getNearbyStores(latitude: list.location!.latitude, longitude: list.location!.longitude, radius: 10, list: list)
+        let stores = try await TraderJoesScraper.shared.findStores(for: list)
         print(stores.map{$0.address})
         #expect(!stores.isEmpty)
     }

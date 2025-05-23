@@ -9,6 +9,7 @@ import UIKit
 import WebKit
 import Alamofire
 import SwiftyJSON
+import CoreLocation
 
 final class WholeFoodsScraper: NSObject, Scraper {
     
@@ -45,11 +46,11 @@ final class WholeFoodsScraper: NSObject, Scraper {
         }
     }
     
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
+    func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore] {
         return []
     }
     
-    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
+    func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         // Make sure subscription key is present
         do {
             try await loadInitialPage()

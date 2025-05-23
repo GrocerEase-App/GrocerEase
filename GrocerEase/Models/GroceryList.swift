@@ -24,24 +24,6 @@ final class GroceryList: Identifiable {
     
     init() { }
     
-    var invalidList: Bool {
-        name == "" || location == nil || stores.isEmpty || !stores.contains(where: {$0.enabled})
-    }
-    
-    func fetchStores() async throws {
-        guard let location = self.location else {
-            print("Tried to fetch stores before setting location")
-            return
-        }
-        self.stores.removeAll()
-        var newStores: [GroceryStore] = []
-        for source in PriceSource.allCases {
-            let scraper = source.scraper.shared
-            newStores.append(contentsOf: try await scraper.getNearbyStores(latitude: location.latitude, longitude: location.longitude, radius: radius, list: self))
-        }
-        self.stores.append(contentsOf: newStores)
-    }
-    
     func sortStores() {
         self.stores.sort { $0.distance ?? .greatestFiniteMagnitude < $1.distance ?? .greatestFiniteMagnitude }
     }

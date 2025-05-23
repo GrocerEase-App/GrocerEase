@@ -37,7 +37,7 @@ final class TraderJoesScraper: NSObject, Scraper {
     }
     
     // MARK: – Search items
-    func searchItems(query: String, store: GroceryStore) async throws -> [GroceryItem] {
+    func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         
         let base = "https://www.traderjoes.com/api/graphql"
         
@@ -88,7 +88,7 @@ final class TraderJoesScraper: NSObject, Scraper {
     
     
     // MARK: – Nearby stores
-    func getNearbyStores(latitude: Double, longitude: Double, radius: Double, list: GroceryList) async throws -> [GroceryStore] {
+    func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore] {
         
         let body: [String: Any] = [
             "request":[
@@ -102,8 +102,8 @@ final class TraderJoesScraper: NSObject, Scraper {
                             [
                                 "addressline":"",
                                 "country":"",
-                                "latitude":String(latitude),
-                                "longitude":String(longitude)
+                                "latitude":String(location.latitude),
+                                "longitude":String(location.longitude)
                             ]
                         ]
                     ],
@@ -147,8 +147,7 @@ final class TraderJoesScraper: NSObject, Scraper {
                     brand: "Trader Joe's",
                     location: CLLocationCoordinate2D(latitude: Double(store["latitude"].stringValue)!, longitude: Double(store["longitude"].stringValue)!),
                     address: address,
-                    source: .traderjoes,
-                    list: list
+                    source: .traderjoes
                 )
             }
         } else {
