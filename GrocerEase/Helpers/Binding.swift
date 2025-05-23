@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+// This extension allows controls which require a float binding (such as Slider)
+// to bind to an integer variable.
+// https://stackoverflow.com/a/74356845
+
 public extension Binding {
     
     static func convert<TInt, TFloat>(_ intBinding: Binding<TInt>) -> Binding<TFloat>
