@@ -11,7 +11,7 @@ import CoreLocation
 
 @Model
 final class GroceryList: Identifiable {
-    var id = UUID()
+    @Attribute(.unique) var id = UUID()
     var name: String = ""
     var location: CLLocationCoordinate2D?
     var address: String?
@@ -41,6 +41,8 @@ extension GroceryList {
         list.location = CLLocationCoordinate2D(latitude: 37.000212813403806, longitude: -122.06235820026123) // Baskin Auditorium
         list.zipcode = "95064"
         list.address = "1156 High St Santa Cruz, CA 95064"
+        list.items.append(GroceryItem.sample)
+        list.stores.append(.sample)
         return list
     }()
 }

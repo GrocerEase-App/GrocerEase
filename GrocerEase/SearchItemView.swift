@@ -123,10 +123,44 @@ struct SearchItemView: View {
                                             dismiss()
                                         }
                                     } else {
-                                        SelectStoreView(group: group) { item in
-                                            self.onSave?(item)
-                                            dismiss()
+                                        switch list.autoSelect {
+                                        case .none:
+                                            SelectStoreView(group: group) { item in
+                                                self.onSave?(item)
+                                                dismiss()
+                                            }
+
+                                        case .closest:
+                                            EditItemView(item: group.sorted {
+                                                let distance0 = $0.store.distance ?? .greatestFiniteMagnitude
+                                                let distance1 = $1.store.distance ?? .greatestFiniteMagnitude
+                                                
+                                                if distance0 == distance1 {
+                                                    return $0.store.sortOrder < $1.store.sortOrder
+                                                } else {
+                                                    return distance0 < distance1
+                                                }
+                                            }.first!)
+
+                                        case .cheapest:
+                                            EditItemView(item: group.sorted {
+                                                let price0 = $0.price ?? .greatestFiniteMagnitude
+                                                let price1 = $1.price ?? .greatestFiniteMagnitude
+                                                
+                                                if price0 == price1 {
+                                                    return $0.store.sortOrder < $1.store.sortOrder
+                                                } else {
+                                                    return price0 < price1
+                                                }
+                                            }.first!)
+
+                                        case .custom:
+                                            EditItemView(item: group.sorted {
+                                                $0.store.sortOrder < $1.store.sortOrder
+                                            }.first!)
                                         }
+
+                                        
                                     }
                                 } label: {
                                     if let cheapest = group.compactMap({ $0.price != nil ? $0 : nil }).min(by: { $0.price! < $1.price! }) {
@@ -170,7 +204,8 @@ struct SearchItemView: View {
                     }
                 }
             }
-            .navigationTitle("New Item")
+            .navigationTitle("Add Item")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if let status = status {
                     ToolbarItemGroup(placement: .bottomBar) {
@@ -191,6 +226,6 @@ struct SearchItemView: View {
 
 }
 
-//#Preview {
-//    SearchItemView()
-//}
+#Preview {
+    SearchItemView(list: .sample)
+}

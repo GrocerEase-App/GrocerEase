@@ -26,7 +26,7 @@ struct LocationSettings: View {
     }
     
     func saveAndExit() {
-        if stores.filter({ $0.enabled }).count > 8 && !showingAlert {
+        if stores.count(where: { $0.enabled }) > 8 && !showingAlert {
             showingAlert = true
         } else {
             if newList {
@@ -243,8 +243,8 @@ struct LocationSettings: View {
                 HStack {
                     Text("Stores").font(.footnote)
                     Spacer()
-                    if true {//loadingStores == nil && !stores.isEmpty {
-                        Menu("Edit") {
+                    if loadingStores == nil && !stores.isEmpty {
+                        Menu("Options") {
                             Button("Sort by Brand", action: sortByBrand).textCase(nil)
                             Button("Sort by Distance", action: sortByDistance).textCase(nil)
                             Divider()

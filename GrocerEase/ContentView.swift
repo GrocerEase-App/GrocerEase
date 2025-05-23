@@ -23,9 +23,7 @@ enum ListDirection: String, CaseIterable {
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @State var list: GroceryList
-    //    @State private var groceryList: [GroceryItem] = GroceryItem.samples
     @State private var showingSearchSheet = false
-    //    @State private var selectedItem: GroceryItem?
     @State private var listOrder: ListOrder = .name
     @State private var listDirection: ListDirection = .ascending
     @State private var showingLocationSheet: Bool = false
@@ -49,45 +47,57 @@ struct ContentView: View {
     
     var body: some View {
         
-        List {
-            ForEach(sortedGroceryList) { item in
-                NavigationLink {
-                    EditItemView(item: item)
-                } label: {
-                    HStack {
-                        Button(action: {
-                            if let index = list.items.firstIndex(where: { $0.id == item.id }) {
-                                list.items[index].isCompleted.toggle()
+        VStack {
+            if list.items.isEmpty {
+                VStack(spacing: 10) {
+                    Text("Your new list is ready to go!").font(.title2)
+                    Text("Add your first item by pressing the \(Image(systemName: "plus")) button in the top right corner.")
+                }.padding()
+            } else {
+                List {
+                    ForEach(sortedGroceryList) { item in
+                        NavigationLink {
+                            EditItemView(item: item)
+                        } label: {
+                            HStack {
+                                Button(action: {
+                                    if let index = list.items.firstIndex(where: { $0.id == item.id }) {
+                                        list.items[index].isCompleted.toggle()
+                                    }
+                                }) {
+                                    Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
+                                }
+                                .imageScale(.large)
+                                .padding(.trailing)
+                                .buttonStyle(BorderlessButtonStyle())
+                                
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                        .strikethrough(item.isCompleted, color: .gray)
+                                    Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                
                             }
-                        }) {
-                            Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
                         }
-                        .imageScale(.large)
-                        .padding(.trailing)
-                        .buttonStyle(BorderlessButtonStyle())
                         
-                        VStack(alignment: .leading) {
-                            Text(item.name)
-                                .strikethrough(item.isCompleted, color: .gray)
-                            Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
                         
                     }
-                }
-                
-                
-            }
-            .onDelete { indexSet in
-                for index in indexSet {
-                    let item = sortedGroceryList[index]
-                    if let originalIndex = list.items.firstIndex(where: {$0.id == item.id}) {
-                        modelContext.delete(list.items[originalIndex])
+                    .onDelete { indexSet in
+                        for index in indexSet {
+                            let item = sortedGroceryList[index]
+                            if let originalIndex = list.items.firstIndex(where: {$0.id == item.id}) {
+                                list.items.remove(at: originalIndex)
+                                modelContext.delete(list.items[originalIndex])
+                            }
+                        }
                     }
                 }
             }
         }
+        
+        
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -103,7 +113,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingSearchSheet) {
             SearchItemView(list: list) { item in
-                item.save()
+                
             }
         }
         .sheet(isPresented: $showingLocationSheet) {
@@ -117,7 +127,8 @@ struct ContentView: View {
     }
 }
 
-//
-//#Preview {
-//    ContentView()
-//}
+#Preview {
+    NavigationView {
+        ContentView(list: .sample)
+    }
+}

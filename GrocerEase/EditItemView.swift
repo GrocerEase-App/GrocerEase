@@ -183,6 +183,7 @@ struct EditItemView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
+                    item.save()
                     onSave?(item)
                     dismiss()
                 }

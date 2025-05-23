@@ -11,7 +11,7 @@ import CoreLocation
 
 @Model
 final class GroceryStore: Equatable {
-    var id = UUID()
+    @Attribute(.unique) var id = UUID()
     var storeNum: String // store identifier
     var brand: String // store brand name
     var sortOrder: Int = 0 // order within list

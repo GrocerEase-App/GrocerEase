@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 final class GroceryItem: Identifiable {
-    var id = UUID()
+    @Attribute(.unique) var id = UUID()
     var name: String
     var quantity: Double
     var timestamp: Date
@@ -74,7 +74,9 @@ final class GroceryItem: Identifiable {
     }
     
     func save(to list: GroceryList? = nil) {
-        self.list = list ?? self.store.list
+        if self.list == nil {
+            self.list = list ?? self.store.list
+        }
         try? modelContext?.save()
     }
     
