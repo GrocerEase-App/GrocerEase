@@ -19,6 +19,7 @@ final class GroceryList: Identifiable {
     var radius: Double = 5
     var maxStores: Int = 0
     var autoSelect: AutoSelect = AutoSelect.none
+    var showCompleted: Bool = false
     @Relationship(deleteRule: .cascade, inverse: \GroceryItem.list) var items: [GroceryItem] = []
     @Relationship(deleteRule: .cascade, inverse: \GroceryStore.list) var stores: [GroceryStore] = []
     

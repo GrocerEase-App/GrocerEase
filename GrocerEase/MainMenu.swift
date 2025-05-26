@@ -8,13 +8,16 @@
 import SwiftUI
 
 struct MainMenu: View {
+    var list: GroceryList
     @Binding var listOrder: ListOrder
     @Binding var listDirection: ListDirection
     @Binding var showingPopover: Bool
     
     var body: some View {
         Menu {
-            Text("Show Completed")
+            Button(list.showCompleted ? "Hide Completed" : "Show Completed") {
+                list.showCompleted.toggle()
+            }
             
             Button("List Settings") {
                 showingPopover = true
@@ -32,8 +35,6 @@ struct MainMenu: View {
                     }
                 }
             }
-            
-            Text("Edit Range")
         } label: {
             Image(systemName: "ellipsis.circle")
         }

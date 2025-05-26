@@ -29,7 +29,9 @@ struct ContentView: View {
     @State private var showingLocationSheet: Bool = false
     
     private var sortedGroceryList: [GroceryItem] {
-        let list = list.items.sorted(by: {
+        let list = list.items
+            .filter { self.list.showCompleted || !$0.isCompleted }
+            .sorted(by: {
             switch listOrder {
             case .name:
                 return $0.name < $1.name
@@ -60,11 +62,13 @@ struct ContentView: View {
                             EditItemView(item: item)
                         } label: {
                             HStack {
-                                Button(action: {
-                                    if let index = list.items.firstIndex(where: { $0.id == item.id }) {
-                                        list.items[index].isCompleted.toggle()
+                                Button {
+                                    withAnimation {
+                                        if let index = list.items.firstIndex(where: { $0.id == item.id }) {
+                                            list.items[index].isCompleted.toggle()
+                                        }
                                     }
-                                }) {
+                                } label: {
                                     Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
                                 }
                                 .imageScale(.large)
@@ -73,7 +77,8 @@ struct ContentView: View {
                                 
                                 VStack(alignment: .leading) {
                                     Text(item.name)
-                                        .strikethrough(item.isCompleted, color: .gray)
+                                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
+//                                        .strikethrough(item.isCompleted, color: .gray)
                                     Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)")
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
@@ -101,7 +106,7 @@ struct ContentView: View {
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                MainMenu(listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingLocationSheet)
+                MainMenu(list: list, listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingLocationSheet)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: {
