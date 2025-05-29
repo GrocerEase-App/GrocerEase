@@ -115,8 +115,6 @@ final class WholeFoodsScraper: NSObject, Scraper {
 
     return stores
 }
-        
-    }
     
     func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         // Make sure subscription key is present
