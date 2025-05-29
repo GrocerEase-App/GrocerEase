@@ -8,43 +8,29 @@
 import SwiftUI
 import SwiftData
 
-enum ListOrder: String, CaseIterable {
-    case name = "Name"
-    case date = "Date Added"
-    case price = "Price"
-    case store = "Store"
-}
-
-enum ListDirection: String, CaseIterable {
-    case ascending = "Ascending"
-    case descending = "Descending"
-}
-
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @State var list: GroceryList
     @State private var showingSearchSheet = false
-    @State private var listOrder: ListOrder = .name
-    @State private var listDirection: ListDirection = .ascending
     @State private var showingLocationSheet: Bool = false
     
     private var sortedGroceryList: [GroceryItem] {
-        let list = list.items
-            .filter { self.list.showCompleted || !$0.isCompleted }
+        let items = list.items
+            .filter { list.showCompleted || !$0.isCompleted }
             .sorted(by: {
-            switch listOrder {
-            case .name:
-                return $0.name < $1.name
-            case .date:
-                return $0.timestamp < $1.timestamp
-            case .price:
-                return $0.price ?? 0.0 < $1.price ?? 0.0
-            case .store:
-                return $0.store.brand < $1.store.brand
-            }
-        })
+                switch list.listOrder {
+                case .name:
+                    return $0.name < $1.name
+                case .date:
+                    return $0.timestamp < $1.timestamp
+                case .price:
+                    return $0.price ?? 0.0 < $1.price ?? 0.0
+                case .store:
+                    return $0.store.brand < $1.store.brand
+                }
+            })
         
-        return listDirection == .ascending ? list : list.reversed()
+        return list.listDirection == .ascending ? items : items.reversed()
     }
     
     var body: some View {
@@ -78,7 +64,7 @@ struct ContentView: View {
                                 VStack(alignment: .leading) {
                                     Text(item.name)
                                         .foregroundStyle(item.isCompleted ? .secondary : .primary)
-//                                        .strikethrough(item.isCompleted, color: .gray)
+                                    //                                        .strikethrough(item.isCompleted, color: .gray)
                                     Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)")
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
@@ -106,7 +92,7 @@ struct ContentView: View {
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                MainMenu(list: list, listOrder: $listOrder, listDirection: $listDirection, showingPopover: $showingLocationSheet)
+                MainMenu(list: list, showingPopover: $showingLocationSheet)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: {

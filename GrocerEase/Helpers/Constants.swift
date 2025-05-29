@@ -33,3 +33,15 @@ enum PriceSource: String, CaseIterable, Codable {
         }
     }
 }
+
+enum ListOrder: String, CaseIterable, Codable {
+    case name = "Name"
+    case date = "Date Added"
+    case price = "Price"
+    case store = "Store"
+}
+
+enum ListDirection: String, CaseIterable, Codable {
+    case ascending = "Ascending"
+    case descending = "Descending"
+}

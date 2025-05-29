@@ -18,6 +18,8 @@ final class GroceryList: Identifiable {
     var zipcode: String?
     var radius: Double = 5
     var maxStores: Int = 0
+    var listOrder: ListOrder = ListOrder.name
+    var listDirection: ListDirection = ListDirection.ascending
     var autoSelect: AutoSelect = AutoSelect.none
     var showCompleted: Bool = false
     @Relationship(deleteRule: .cascade, inverse: \GroceryItem.list) var items: [GroceryItem] = []
