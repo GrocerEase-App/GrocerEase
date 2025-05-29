@@ -173,7 +173,6 @@ struct EditItemView: View {
             } header: {
                 Text("Additional Details")
             } footer: {
-                Text("To edit details manually, first save the item then return to it in your shopping list.")
             }
             
             
