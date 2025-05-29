@@ -180,11 +180,13 @@ struct EditItemView: View {
         .navigationTitle("Review Item")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    item.save()
-                    onSave?(item)
-                    dismiss()
+            if item.list == nil {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        item.save()
+                        onSave?(item)
+                        dismiss()
+                    }
                 }
             }
         }
@@ -193,6 +195,6 @@ struct EditItemView: View {
 
 #Preview {
     NavigationView {
-//        EditItemView(item: GroceryItem.sample)
+        EditItemView(item: GroceryItem.sample)
     }
 }

@@ -196,7 +196,7 @@ final class TargetScraper: NSObject, Scraper {
         }
         let visitorId = visitorCookie.value
         
-        guard let zip = store.list?.zipcode else {
+        guard let zip = try await store.list?.location?.fetchZipCode() else {
             throw "Zip Code required for Target Scraper"
         }
         

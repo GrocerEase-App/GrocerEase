@@ -41,6 +41,15 @@ struct ContentView: View {
                     Text("Your new list is ready to go!").font(.title2)
                     Text("Add your first item by pressing the \(Image(systemName: "plus")) button in the top right corner.")
                 }.padding()
+                
+            } else if list.items.count(where: {!$0.isCompleted}) == 0 && !list.showCompleted {
+                VStack {
+                    Button("Show Completed") {
+                        withAnimation {
+                            list.showCompleted = true
+                        }
+                    }
+                }
             } else {
                 List {
                     ForEach(sortedGroceryList) { item in
