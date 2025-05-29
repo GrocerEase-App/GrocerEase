@@ -47,7 +47,75 @@ final class WholeFoodsScraper: NSObject, Scraper {
     }
     
     func findStores(near location: CLLocationCoordinate2D, within radius: Double) async throws -> [GroceryStore] {
-        return []
+        do {
+        try await loadInitialPage()
+    } catch {
+        throw error
+    }
+
+    // Whole Foods doesn't require xapiKey, so we skip that check.
+
+    let baseURL = "https://www.wholefoodsmarket.com/stores/search"
+    
+    var request = URLRequest(url: URL(string: baseURL)!)
+    request.httpMethod = "POST"
+    
+    let headers: [String: String] = [
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "User-Agent": Constants.UserAgent
+    ]
+    
+    for (key, value) in headers {
+        request.setValue(value, forHTTPHeaderField: key)
+    }
+
+    // Add cookies from WebView
+    let cookies = await webView.getAllCookiesAsync()
+    for (key, value) in HTTPCookie.requestHeaderFields(with: cookies) {
+        request.setValue(value, forHTTPHeaderField: key)
+    }
+
+    // Build POST body with location
+    let body: [String: Any] = [
+        "lat": location.latitude,
+        "lng": location.longitude
+    ]
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+    // Make request
+    let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+
+    // Parse and map stores
+    let stores = apiResponse.arrayValue.compactMap { store -> GroceryStore? in
+        let distance = store["distance"]["equivalentMeters"].doubleValue
+        guard distance <= radius else { return nil }
+
+        let id = store["storeId"].stringValue
+        let brand = "wholefoods"
+        let addressJSON = store["location"]["address"]
+
+        guard let line1 = addressJSON["line1"].string,
+              let city = addressJSON["city"].string,
+              let state = addressJSON["state"].string,
+              let zip = addressJSON["postalCode"].string,
+              let country = addressJSON["country"].string else {
+            return nil
+        }
+
+        let address = String(line1: line1, line2: nil, city: city, state: state, zip: zip, country: country)
+
+        return GroceryStore(
+            storeNum: id,
+            brand: brand,
+            address: address,
+            source: .wholeFoods
+        )
+    }
+
+    return stores
+}
+        
     }
     
     func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
