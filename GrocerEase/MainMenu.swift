@@ -17,7 +17,9 @@ struct MainMenu: View {
     var body: some View {
         Menu {
             Button(list.showCompleted ? "Hide Completed" : "Show Completed") {
-                list.showCompleted.toggle()
+                withAnimation {
+                    list.showCompleted.toggle()
+                }
             }
             
             Button("List Settings") {
