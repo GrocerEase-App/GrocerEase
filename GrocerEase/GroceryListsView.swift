@@ -1,5 +1,5 @@
 //
-//  ListsView.swift
+//  GroceryListsView.swift
 //  GrocerEase
 //
 //  Created by Finlay Nathan on 5/21/25.
@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ListsView: View {
+struct GroceryListsView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\GroceryList.name)]) var lists: [GroceryList]
     @State var newListSheetPresented: Bool = false
@@ -24,7 +24,7 @@ struct ListsView: View {
                 } else {
                     List(lists, id: \.id) { list in
                         NavigationLink {
-                            ContentView(list: list)
+                            GroceryListView(list: list)
                         } label: {
                             Text(list.name)
                                 .badge(list.items.count(where: {!$0.isCompleted}))
@@ -52,5 +52,5 @@ struct ListsView: View {
 }
 
 #Preview {
-    ListsView()
+    GroceryListsView()
 }

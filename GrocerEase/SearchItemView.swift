@@ -165,7 +165,7 @@ struct SearchItemView: View {
                                 } label: {
                                     if let cheapest = group.compactMap({ $0.price != nil ? $0 : nil }).min(by: { $0.price! < $1.price! }) {
                                         HStack {
-                                            ProductImage(url: cheapest.imageUrl)
+                                            ProductImageView(url: cheapest.imageUrl)
 
                                             VStack(alignment: .leading) {
                                                 Text(item.name)

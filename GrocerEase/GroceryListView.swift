@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  GroceryListView.swift
 //  GrocerEase
 //
 //  Created by Finlay Nathan on 4/21/25.
@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct GroceryListView: View {
     @Environment(\.modelContext) var modelContext
     @State var list: GroceryList
     @State private var showingSearchSheet = false
@@ -101,7 +101,7 @@ struct ContentView: View {
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                MainMenu(list: list, showingPopover: $showingLocationSheet)
+                GroceryListMenu(list: list, showingPopover: $showingLocationSheet)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: {
@@ -129,6 +129,6 @@ struct ContentView: View {
 
 #Preview {
     NavigationView {
-        ContentView(list: .sample)
+        GroceryListView(list: .sample)
     }
 }

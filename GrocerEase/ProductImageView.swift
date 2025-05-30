@@ -1,5 +1,5 @@
 //
-//  ProductImage.swift
+//  ProductImageView.swift
 //  GrocerEase
 //
 //  Created by Finlay Nathan on 5/20/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ProductImage: View {
+struct ProductImageView: View {
     var url: URL?
     var large: Bool = false
     var size: CGFloat {

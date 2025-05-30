@@ -1,5 +1,5 @@
 //
-//  MainMenu.swift
+//  GroceryListMenu.swift
 //  GrocerEase
 //
 //  Created by Finlay Nathan on 4/27/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MainMenu: View {
+struct GroceryListMenu: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @State var list: GroceryList
