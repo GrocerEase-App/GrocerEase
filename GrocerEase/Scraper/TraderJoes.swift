@@ -7,7 +7,6 @@
 
 import UIKit
 import WebKit
-import Alamofire
 import SwiftyJSON
 import CoreLocation
 
@@ -39,7 +38,7 @@ final class TraderJoesScraper: NSObject, Scraper {
     // MARK: – Search items
     func search(_ query: String, at store: GroceryStore) async throws -> [GroceryItem] {
         
-        let base = "https://www.traderjoes.com/api/graphql"
+        let base = URL(string: "https://www.traderjoes.com/api/graphql")!
         
         let body: [String: Any] = [
             "operationName": "SearchProducts",
@@ -54,13 +53,12 @@ final class TraderJoesScraper: NSObject, Scraper {
             ]
         ]
         
-        var request = try URLRequest(url: base, method: .post)
+        var request = URLRequest(url: base)
+        request.httpMethod = "POST"
         request.setValue(Constants.UserAgent, forHTTPHeaderField: "User-Agent")
         request.httpBody = try JSON(body).rawData()
         
-        let json = try await AF.request(request)
-            .serializingDecodable(JSON.self)
-            .value
+        let json = try await URLSession.shared.json(for: request)
         
         let items = json["data"]["products"]["items"].arrayValue.enumerated()
         return items.map { i, doc in
@@ -120,14 +118,13 @@ final class TraderJoesScraper: NSObject, Scraper {
         
         let base = URL(string: "https://alphaapi.brandify.com/rest/locatorsearch")!
         
-        var request = try URLRequest(url: base, method: .post)
+        var request = try URLRequest(url: base)
+        request.httpMethod = "POST"
         request.setValue(Constants.UserAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("application/json;charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSON(body).rawData()
         
-        let json = try await AF.request(request)
-            .serializingDecodable(JSON.self)
-            .value
+        let json = try await URLSession.shared.json(for: request)
         
         if let stores = json["response"]["collection"].array {
             return stores.map { store in

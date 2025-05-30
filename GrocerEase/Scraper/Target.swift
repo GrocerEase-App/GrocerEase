@@ -7,7 +7,6 @@
 
 import UIKit
 import WebKit
-import Alamofire
 import SwiftyJSON
 import HTMLEntities
 import CoreLocation
@@ -142,7 +141,7 @@ final class TargetScraper: NSObject, Scraper {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+        let apiResponse = try await URLSession.shared.json(for: request)
         
         let stores = apiResponse["data"]["nearby_stores"]["stores"].arrayValue.map { store in
             // ---------- Build full address ----------
@@ -243,8 +242,7 @@ final class TargetScraper: NSObject, Scraper {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        // Execute the request using this beautiful combination of Alamofire and SwiftyJSON
-        let apiResponse = try await AF.request(request).serializingDecodable(JSON.self).value
+        let apiResponse = try await URLSession.shared.json(for: request)
     
         // Map the products to a list of GroceryItems
         // This will need to be heavily expanded once we've finalized the GroceryItem model
