@@ -5,99 +5,78 @@
 //  Created by Finlay Nathan on 5/14/25.
 //
 
-import SwiftUI
+import CoreLocation
 import MapKit
+import SwiftUI
 
-@Observable
-class LocationSearchViewModel: NSObject, MKLocalSearchCompleterDelegate {
-    var completions: [MKLocalSearchCompletion] = []
-    
-    private let searchCompleter: MKLocalSearchCompleter = {
-        let completer = MKLocalSearchCompleter()
-        completer.resultTypes = [.address]
-        return completer
-    }()
-    
-    override init() {
-        super.init()
-        searchCompleter.delegate = self
-    }
-    
-    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        completions = completer.results.filter {
-            $0.subtitle.contains("United States") || !$0.subtitle.isEmpty
-        }
-    }
-    
-    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        print("❌ Search completer failed: \(error)")
-    }
-    
-    func search(for query: String) {
-        searchCompleter.queryFragment = query
-    }
-}
-
+/// Provides a search interface for addresses or an option to select one based
+/// on the user's current location.
+///
+/// - Parameter onLocationSelected: Completion handler returning a CLPlacemark
+///   for the selected location
 struct LocationSearchView: View {
     @State private var viewModel = LocationSearchViewModel()
-    @State private var searchFocused: Bool = false
-    @DebouncedState private var searchText: String = ""
+    @State private var searchFocused = false
+    @DebouncedState private var searchText = ""
     @Environment(\.dismiss) var dismiss
-    
-    var onLocationSelected: (CLLocationCoordinate2D, String, String?) -> Void
-    
+
+    var onLocationSelected: (CLPlacemark?) -> Void
+
     var body: some View {
         VStack {
             if viewModel.completions.isEmpty || searchText.isEmpty {
                 VStack {
-                    CurrentLocationButton(onLocationSelected: onLocationSelected)
-                    Text("or")
-                        .padding(16)
-                    
+                    CurrentLocationButton { coordinate in
+                        Task {
+                            let result = await viewModel.resolve(coordinate)
+                            onLocationSelected(result)
+                            dismiss()
+                        }
+                    }
+
+                    Text("or").padding(16)
+
                     Button("Enter an address") {
                         searchFocused = true
                     }.disabled(searchFocused)
-                }.padding(24)
+                }
+                .padding(24)
             } else {
-                List {
-                    ForEach(viewModel.completions, id: \.self) { completion in
-                        Button {
-                            Task {
-                                let request = MKLocalSearch.Request(completion: completion)
-                                let search = MKLocalSearch(request: request)
-                                let response = try await search.start()
-                                DispatchQueue.main.async {
-                                    let location = response.mapItems.first!
-                                    let placemark = location.placemark
-                                    let address = placemark.formattedAddress
-                                    self.onLocationSelected(location.placemark.coordinate, address, placemark.postalCode)
-                                    dismiss()
-                                }
-                            }
-                        } label: {
-                            VStack(alignment: .leading) {
-                                Text(completion.title).bold()
-                                Text(completion.subtitle).font(.caption).foregroundColor(.secondary)
+                List(viewModel.completions, id: \.self) { completion in
+                    Button {
+                        Task {
+                            if let result = await viewModel.resolve(completion)
+                            {
+                                onLocationSelected(result)
+                                dismiss()
                             }
                         }
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(completion.title).bold()
+                            Text(completion.subtitle)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
-                }.listStyle(.plain)
+                }
+                .listStyle(.plain)
             }
-            
-        }.navigationTitle("Search Location")
-            .searchable(text: $searchText, isPresented: $searchFocused, prompt: "Search an address, city, or ZIP code")
-            .onChange(of: searchText) {
-                viewModel.search(for: searchText)
-            }
-        
-        
+        }
+        .navigationTitle("Search Location")
+        .searchable(
+            text: $searchText,
+            isPresented: $searchFocused,
+            prompt: "Search an address, city, or ZIP code"
+        )
+        .onChange(of: searchText) {
+            viewModel.search(for: searchText)
+        }
     }
-    
 }
 
 #Preview {
     NavigationView {
-        LocationSearchView { _,_,_  in}
+        LocationSearchView { _ in }
     }
 }
-

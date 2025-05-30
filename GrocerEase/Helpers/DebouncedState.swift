@@ -21,10 +21,10 @@
 import SwiftUI
 import Combine
 
-// This custom property wrapper adds a "debounce" delay to the State wrapper
-// This can be used to "wait" for the user to stop typing before making
-// another API call, reducing the risk of getting blocked.
-
+/// Adds a "debounce" delay to the State wrapper
+///
+/// This can be used to "wait" for the user to stop typing before making
+/// another API call, reducing the risk of getting rate limited.
 @propertyWrapper
 struct DebouncedState<Value>: DynamicProperty {
     

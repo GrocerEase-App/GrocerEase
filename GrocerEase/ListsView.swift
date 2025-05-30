@@ -44,7 +44,7 @@ struct ListsView: View {
             }
             .sheet(isPresented: $newListSheetPresented) {
                 NavigationStack {
-                    LocationSettings()
+                    ListSettingsView()
                 }
             }
         }

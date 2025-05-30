@@ -21,6 +21,7 @@ enum PriceSource: String, CaseIterable, Codable {
     case albertsons = "Albertsons"
     case traderjoes = "Trader Joe's"
     case target = "Target"
+    case wholeFoods = "Whole Foods Market"
     
     var scraper: Scraper.Type {
         switch self {
@@ -30,6 +31,8 @@ enum PriceSource: String, CaseIterable, Codable {
             return TargetScraper.self
         case .traderjoes:
             return TraderJoesScraper.self
+        case .wholeFoods:
+            return WholeFoodsScraper.self
         }
     }
 }

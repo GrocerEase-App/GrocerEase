@@ -118,7 +118,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingLocationSheet) {
             NavigationStack {
-                LocationSettings(list: list)
+                ListSettingsView(list: list)
             }
             
         }
