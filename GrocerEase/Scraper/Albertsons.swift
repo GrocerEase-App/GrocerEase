@@ -17,7 +17,7 @@ final class AlbertsonsScraper: NSObject, Scraper {
     var hiddenWindow: UIWindow?
     var xapiKey: String?
     var apimKey: String?
-    let initialUrl = URL(string: "https://www.safeway.com/")!
+    let initialUrl = URL(string: "https://www.albertsons.com/")!
     var firstLoadComplete = false
     
     // These are wrappers for Swift async
@@ -110,7 +110,7 @@ final class AlbertsonsScraper: NSObject, Scraper {
         // Unlike previous commit, we are building the request ourselves.
         // This method is more prone to issues if Albertsons decides to update their
         // API, but makes calls a lot faster on our end.
-        let baseURLString = "https://www.safeway.com/abs/pub/xapi/pgmsearch/v1/search/products"
+        let baseURLString = "https://www.albertsons.com/abs/pub/xapi/pgmsearch/v1/search/products"
         
         // Generate request ID: 3 random digits + milliseconds since epoch
         let randomPrefix = String(format: "%03d", Int.random(in: 0...999))
@@ -121,8 +121,8 @@ final class AlbertsonsScraper: NSObject, Scraper {
         var components = URLComponents(string: baseURLString)
         components?.queryItems = [
             URLQueryItem(name: "request-id", value: requestID),
-            URLQueryItem(name: "url", value: "https://www.safeway.com"),
-            URLQueryItem(name: "pageurl", value: "https://www.safeway.com"),
+            URLQueryItem(name: "url", value: "https://www.albertsons.com"),
+            URLQueryItem(name: "pageurl", value: "https://www.albertsons.com"),
             URLQueryItem(name: "pagename", value: "search"),
             URLQueryItem(name: "rows", value: "30"),
             URLQueryItem(name: "start", value: "0"),
@@ -203,7 +203,7 @@ final class AlbertsonsScraper: NSObject, Scraper {
             throw "API key not set for Albertsons scraper."
         }
         
-        let baseURLString = "https://www.safeway.com/abs/pub/xapi/storeresolver/v2/all"
+        let baseURLString = "https://www.albertsons.com/abs/pub/xapi/storeresolver/v2/all"
 
         var components = URLComponents(string: baseURLString)
         components?.queryItems = [
