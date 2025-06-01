@@ -12,7 +12,7 @@ import CoreLocation
 
 struct GrocerEaseTests {
 
-    @Test func testSearchSafeway() async throws {
+    @Test func testSearchAlbertsons() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let list = GroceryList()
         let store = GroceryStore(storeNum: "799", brand: "Safeway", source: .albertsons)

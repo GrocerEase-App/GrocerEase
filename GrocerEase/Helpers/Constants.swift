@@ -25,7 +25,7 @@ enum PriceSource: String, CaseIterable, Codable {
     var scraper: Scraper.Type {
         switch self {
         case .albertsons:
-            return SafewayScraper.self
+            return AlbertsonsScraper.self
         case .target:
             return TargetScraper.self
         case .traderjoes:

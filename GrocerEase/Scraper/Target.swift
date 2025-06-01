@@ -124,7 +124,7 @@ final class TargetScraper: NSObject, Scraper {
         ]
         
         guard let finalUrl = components?.url else {
-            throw "Couldn't generate search URL in Safeway Scraper"
+            throw "Couldn't generate search URL in Target Scraper"
         }
         var request = URLRequest(url: finalUrl)
         
@@ -182,7 +182,7 @@ final class TargetScraper: NSObject, Scraper {
         
         // Set up API call
         // Unlike previous commit, we are building the request ourselves.
-        // This method is more prone to issues if Safeway decides to update their
+        // This method is more prone to issues if Target decides to update their
         // API, but makes calls a lot faster on our end.
         let baseURLString = "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2"
         
@@ -246,7 +246,7 @@ final class TargetScraper: NSObject, Scraper {
     
         // Map the products to a list of GroceryItems
         // This will need to be heavily expanded once we've finalized the GroceryItem model
-        // Target.com parser — mirrors your Safeway mapping style
+        // Target.com parser
         let products = apiResponse["data"]["search"]["products"].arrayValue.enumerated()
         let items = products.map { i, product in
             let newItem = GroceryItem(

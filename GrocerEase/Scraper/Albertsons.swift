@@ -1,5 +1,5 @@
 //
-//  Safeway.swift
+//  Albertsons.swift
 //  GrocerEase
 //
 //  Created by Finlay Nathan on 5/12/25.
@@ -11,7 +11,7 @@ import SwiftyJSON
 import CoreLocation
 
 // Much simplified from previous commit!
-final class SafewayScraper: NSObject, Scraper {
+final class AlbertsonsScraper: NSObject, Scraper {
     
     var webView: WKWebView!
     var hiddenWindow: UIWindow?
@@ -27,7 +27,7 @@ final class SafewayScraper: NSObject, Scraper {
     // The scraper is now a singleton class, meaning it will be reused for
     // subsequent requests, speeding up requests and reducing space complexity.
     // This means we will have to check for cookie expiration though!
-    static let shared = SafewayScraper()
+    static let shared = AlbertsonsScraper()
     
     // Upon initialization, create the invisible web view.
     override init() {
@@ -83,7 +83,7 @@ final class SafewayScraper: NSObject, Scraper {
                     self.firstLoadComplete = true
                     return
                 } else {
-                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Safeway API keys")
+                    self.setupContinuation?.resume(throwing: "Couldn't retrieve required Albertsons API keys")
                     return
                 }
             }
@@ -103,12 +103,12 @@ final class SafewayScraper: NSObject, Scraper {
         }
         
         guard let apimKey = self.apimKey else {
-            throw "Safeway subscription key not found"
+            throw "Albertsons subscription key not found"
         }
         
         // Set up API call
         // Unlike previous commit, we are building the request ourselves.
-        // This method is more prone to issues if Safeway decides to update their
+        // This method is more prone to issues if Albertsons decides to update their
         // API, but makes calls a lot faster on our end.
         let baseURLString = "https://www.safeway.com/abs/pub/xapi/pgmsearch/v1/search/products"
         
@@ -136,7 +136,7 @@ final class SafewayScraper: NSObject, Scraper {
         
         // Finalize URL
         guard let finalUrl = components?.url else {
-            throw "Couldn't generate search URL in Safeway Scraper"
+            throw "Couldn't generate search URL in Albertsons Scraper"
         }
         var request = URLRequest(url: finalUrl)
         
@@ -169,7 +169,7 @@ final class SafewayScraper: NSObject, Scraper {
             newItem.snap = product["snapEligible"].boolValue
             newItem.location = product["aisleLocation"].stringValue
             // newItem.locationLong = "\(product[""])" tbh i dont even know what to put here
-            // safeway literally has inch by inch coordinates of where the product is located
+            // albertsons literally has inch by inch coordinates of where the product is located
             newItem.inStock = product["inventoryAvailable"].stringValue == "1"
             newItem.price = product["price"].doubleValue
             newItem.unitPrice = product["pricePer"].doubleValue
@@ -215,7 +215,7 @@ final class SafewayScraper: NSObject, Scraper {
         ]
         
         guard let finalUrl = components?.url else {
-            throw "Couldn't generate search URL in Safeway Scraper"
+            throw "Couldn't generate search URL in Albertsons Scraper"
         }
         var request = URLRequest(url: finalUrl)
         
