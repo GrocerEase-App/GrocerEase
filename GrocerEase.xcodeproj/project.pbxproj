@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		85A749EC2DECF1A200CDD393 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 85A749EB2DECF1A200CDD393 /* README.md */; };
 		85B5075A2DDEB9B200DC5368 /* HTMLEntities in Frameworks */ = {isa = PBXBuildFile; productRef = 85B507592DDEB9B200DC5368 /* HTMLEntities */; };
 		85F36D7C2DD43CB800FEB35C /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 85F36D7B2DD43CB800FEB35C /* SwiftyJSON */; };
 /* End PBXBuildFile section */
@@ -32,6 +33,7 @@
 		851301AF2DB74D7900593115 /* GrocerEase.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GrocerEase.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		851301C02DB74D7B00593115 /* GrocerEaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GrocerEaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		851301CA2DB74D7B00593115 /* GrocerEaseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GrocerEaseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		85A749EB2DECF1A200CDD393 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,6 +101,7 @@
 				851301C32DB74D7B00593115 /* GrocerEaseTests */,
 				851301CD2DB74D7B00593115 /* GrocerEaseUITests */,
 				851301B02DB74D7900593115 /* Products */,
+				85A749EB2DECF1A200CDD393 /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -238,6 +241,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85A749EC2DECF1A200CDD393 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
