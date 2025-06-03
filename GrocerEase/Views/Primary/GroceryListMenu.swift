@@ -13,7 +13,7 @@ struct GroceryListMenu: View {
     @State var list: GroceryList
     @Binding var showingPopover: Bool
     @State var showingDeleteAlert: Bool = false
-    
+
     var body: some View {
         Menu {
             Button(list.showCompleted ? "Hide Completed" : "Show Completed") {
@@ -21,7 +21,7 @@ struct GroceryListMenu: View {
                     list.showCompleted.toggle()
                 }
             }
-            
+
             Button("List Settings") {
                 showingPopover = true
             }
@@ -38,29 +38,38 @@ struct GroceryListMenu: View {
                     }
                 }
             }
-            
+
             Divider()
-            
+
             Button("Delete List", role: .destructive) {
                 showingDeleteAlert = true
             }
-            
+
         } label: {
             Image(systemName: "ellipsis.circle")
-        }.alert("Delete List", isPresented: $showingDeleteAlert, actions: {
-            Button("Cancel", role: .cancel) {
-                showingDeleteAlert = false
-            }
-            Button("Delete", role: .destructive) {
-                showingDeleteAlert = false
-                withAnimation {
-                    modelContext.delete(list)
+        }.alert(
+            "Delete List",
+            isPresented: $showingDeleteAlert,
+            actions: {
+                Button("Cancel", role: .cancel) {
+                    showingDeleteAlert = false
                 }
-                dismiss()
+                Button("Delete", role: .destructive) {
+                    showingDeleteAlert = false
+                    withAnimation {
+                        modelContext.delete(list)
+                    }
+                    dismiss()
+                }
+            },
+            message: {
+                Text(
+                    "Are you sure you want to permanently delete the list \(list.name) and "
+                        + (list.items.count == 1
+                            ? "its item?"
+                            : "all \(list.items.count) items it contains?")
+                )
             }
-        }, message: {
-            Text("Are you sure you want to permanently delete the list \(list.name) and " +
-                 (list.items.count == 1 ? "its item?" : "all \(list.items.count) items it contains?"))
-        })
+        )
     }
 }

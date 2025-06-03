@@ -8,6 +8,7 @@
 import CoreLocation
 
 extension CLPlacemark {
+    /// Address string based on the address contained by the placemark.
     var formattedAddress: String {
         String(
             line1: self.subThoroughfare.flatMap { houseNumber in

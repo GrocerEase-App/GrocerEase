@@ -5,14 +5,17 @@
 //  Created by Finlay Nathan on 5/13/25.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
+/// Adds support for throwing a String as an error with itself as the error
+/// description.
 extension String: @retroactive LocalizedError {
     public var errorDescription: String? { return self }
 }
 
 extension String {
+    /// Initialize String containing a street address based on its components.
     init(
         line1: String? = nil,
         line2: String? = nil,
@@ -59,5 +62,5 @@ extension String {
         }
         self.init(stringLiteral: address)
     }
-    
+
 }

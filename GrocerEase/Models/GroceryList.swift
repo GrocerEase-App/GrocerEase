@@ -5,9 +5,9 @@
 //  Created by Finlay Nathan on 5/21/25.
 //
 
+import CoreLocation
 import Foundation
 import SwiftData
-import CoreLocation
 
 @Model
 final class GroceryList: Identifiable {
@@ -22,15 +22,20 @@ final class GroceryList: Identifiable {
     var listDirection: ListDirection = ListDirection.ascending
     var autoSelect: AutoSelect = AutoSelect.none
     var showCompleted: Bool = false
-    @Relationship(deleteRule: .cascade, inverse: \GroceryItem.list) var items: [GroceryItem] = []
-    @Relationship(deleteRule: .cascade, inverse: \GroceryStore.list) var stores: [GroceryStore] = []
-    
-    init() { }
-    
+    @Relationship(deleteRule: .cascade, inverse: \GroceryItem.list) var items:
+        [GroceryItem] = []
+    @Relationship(deleteRule: .cascade, inverse: \GroceryStore.list) var stores:
+        [GroceryStore] = []
+
+    init() {}
+
     func sortStores() {
-        self.stores.sort { $0.distance ?? .greatestFiniteMagnitude < $1.distance ?? .greatestFiniteMagnitude }
+        self.stores.sort {
+            $0.distance ?? .greatestFiniteMagnitude < $1.distance
+                ?? .greatestFiniteMagnitude
+        }
     }
-    
+
     func save() {
         modelContext?.insert(self)
         try? modelContext?.save()
@@ -41,7 +46,10 @@ extension GroceryList {
     static let sample: GroceryList = {
         let list = GroceryList()
         list.name = "Sample List"
-        list.location = CLLocationCoordinate2D(latitude: 37.000212813403806, longitude: -122.06235820026123) // Baskin Auditorium
+        list.location = CLLocationCoordinate2D(
+            latitude: 37.000212813403806,
+            longitude: -122.06235820026123
+        )  // Baskin Auditorium
         list.zipcode = "95064"
         list.address = "1156 High St Santa Cruz, CA 95064"
         list.items.append(GroceryItem.sample)

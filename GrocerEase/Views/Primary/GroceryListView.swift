@@ -5,15 +5,15 @@
 //  Created by Finlay Nathan on 4/21/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct GroceryListView: View {
     @Environment(\.modelContext) var modelContext
     @State var list: GroceryList
     @State private var showingSearchSheet = false
     @State private var showingLocationSheet: Bool = false
-    
+
     private var sortedGroceryList: [GroceryItem] {
         let items = list.items
             .filter { list.showCompleted || !$0.isCompleted }
@@ -29,20 +29,24 @@ struct GroceryListView: View {
                     return $0.store.brand < $1.store.brand
                 }
             })
-        
+
         return list.listDirection == .ascending ? items : items.reversed()
     }
-    
+
     var body: some View {
-        
+
         VStack {
             if list.items.isEmpty {
                 VStack(spacing: 10) {
                     Text("Your new list is ready to go!").font(.title2)
-                    Text("Add your first item by pressing the \(Image(systemName: "plus")) button in the top right corner.")
+                    Text(
+                        "Add your first item by pressing the \(Image(systemName: "plus")) button in the top right corner."
+                    )
                 }.padding()
-                
-            } else if list.items.count(where: {!$0.isCompleted}) == 0 && !list.showCompleted {
+
+            } else if list.items.count(where: { !$0.isCompleted }) == 0
+                && !list.showCompleted
+            {
                 VStack {
                     Button("Show Completed") {
                         withAnimation {
@@ -59,35 +63,48 @@ struct GroceryListView: View {
                             HStack {
                                 Button {
                                     withAnimation {
-                                        if let index = list.items.firstIndex(where: { $0.id == item.id }) {
-                                            list.items[index].isCompleted.toggle()
+                                        if let index = list.items.firstIndex(
+                                            where: { $0.id == item.id })
+                                        {
+                                            list.items[index].isCompleted
+                                                .toggle()
                                         }
                                     }
                                 } label: {
-                                    Image(systemName: item.isCompleted ? "largecircle.fill.circle" : "circle")
+                                    Image(
+                                        systemName: item.isCompleted
+                                            ? "largecircle.fill.circle"
+                                            : "circle"
+                                    )
                                 }
                                 .imageScale(.large)
                                 .padding(.trailing)
                                 .buttonStyle(BorderlessButtonStyle())
-                                
+
                                 VStack(alignment: .leading) {
                                     Text(item.name)
-                                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                                        .foregroundStyle(
+                                            item.isCompleted
+                                                ? .secondary : .primary
+                                        )
                                     //                                        .strikethrough(item.isCompleted, color: .gray)
-                                    Text("$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                    Text(
+                                        "$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)"
+                                    )
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
                                 }
-                                
+
                             }
                         }
-                        
-                        
+
                     }
                     .onDelete { indexSet in
                         for index in indexSet {
                             let item = sortedGroceryList[index]
-                            if let originalIndex = list.items.firstIndex(where: {$0.id == item.id}) {
+                            if let originalIndex = list.items.firstIndex(
+                                where: { $0.id == item.id })
+                            {
                                 list.items.remove(at: originalIndex)
                                 modelContext.delete(list.items[originalIndex])
                             }
@@ -96,12 +113,14 @@ struct GroceryListView: View {
                 }
             }
         }
-        
-        
+
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                GroceryListMenu(list: list, showingPopover: $showingLocationSheet)
+                GroceryListMenu(
+                    list: list,
+                    showingPopover: $showingLocationSheet
+                )
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: {
@@ -113,17 +132,16 @@ struct GroceryListView: View {
         }
         .sheet(isPresented: $showingSearchSheet) {
             SearchItemView(list: list) { item in
-                
+
             }
         }
         .sheet(isPresented: $showingLocationSheet) {
             NavigationStack {
                 ListSettingsView(list: list)
             }
-            
+
         }
-        
-        
+
     }
 }
 

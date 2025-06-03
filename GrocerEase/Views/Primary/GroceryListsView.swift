@@ -5,21 +5,23 @@
 //  Created by Finlay Nathan on 5/21/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct GroceryListsView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: [SortDescriptor(\GroceryList.name)]) var lists: [GroceryList]
     @State var newListSheetPresented: Bool = false
-    
+
     var body: some View {
         NavigationStack {
             VStack {
                 if lists.isEmpty {
                     VStack(spacing: 10) {
                         Text("Welcome to GrocerEase! 👋").font(.title2)
-                        Text("Add your first list by pressing the \(Image(systemName: "plus")) button in the top right corner.")
+                        Text(
+                            "Add your first list by pressing the \(Image(systemName: "plus")) button in the top right corner."
+                        )
                     }.padding()
                 } else {
                     List(lists, id: \.id) { list in
@@ -27,7 +29,9 @@ struct GroceryListsView: View {
                             GroceryListView(list: list)
                         } label: {
                             Text(list.name)
-                                .badge(list.items.count(where: {!$0.isCompleted}))
+                                .badge(
+                                    list.items.count(where: { !$0.isCompleted })
+                                )
                         }
                     }
                 }

@@ -18,8 +18,8 @@
 //  Copyright © 2022 Adam Fordyce. All rights reserved.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
 /// Adds a "debounce" delay to the State wrapper
 ///
@@ -27,17 +27,22 @@ import Combine
 /// another API call, reducing the risk of getting rate limited.
 @propertyWrapper
 struct DebouncedState<Value>: DynamicProperty {
-    
+
     @StateObject private var backingState: BackingState<Value>
-    
+
     init(initialValue: Value, delay: Double = 0.3) {
         self.init(wrappedValue: initialValue, delay: delay)
     }
-    
+
     init(wrappedValue: Value, delay: Double = 0.3) {
-        self._backingState = StateObject(wrappedValue: BackingState(originalValue: wrappedValue, delay: delay))
+        self._backingState = StateObject(
+            wrappedValue: BackingState(
+                originalValue: wrappedValue,
+                delay: delay
+            )
+        )
     }
-    
+
     var wrappedValue: Value {
         get {
             backingState.debouncedValue
@@ -46,7 +51,7 @@ struct DebouncedState<Value>: DynamicProperty {
             backingState.currentValue = newValue
         }
     }
-    
+
     public var projectedValue: Binding<Value> {
         Binding {
             backingState.currentValue
@@ -54,25 +59,29 @@ struct DebouncedState<Value>: DynamicProperty {
             backingState.currentValue = $0
         }
     }
-    
+
     private class BackingState<TValue>: ObservableObject {
         @Published var currentValue: TValue
         @Published var debouncedValue: TValue
-        
+
         private var cancellable: AnyCancellable?
-        
+
         init(originalValue: TValue, delay: Double) {
             self.currentValue = originalValue
             self.debouncedValue = originalValue
-            
-            cancellable = $currentValue
+
+            cancellable =
+                $currentValue
                 .map { value -> AnyPublisher<TValue, Never> in
                     if let str = value as? String, str.isEmpty {
                         // Immediately emit empty strings
                         return Just(value).eraseToAnyPublisher()
                     } else {
                         return Just(value)
-                            .delay(for: .seconds(delay), scheduler: RunLoop.main)
+                            .delay(
+                                for: .seconds(delay),
+                                scheduler: RunLoop.main
+                            )
                             .eraseToAnyPublisher()
                     }
                 }
@@ -84,21 +93,21 @@ struct DebouncedState<Value>: DynamicProperty {
 }
 
 struct DebounceStatePropertyWrapperDemoNative: View {
-    
+
     @DebouncedState private var filterText = ""
     @State private var counter = 0
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             Text("Input text:")
             TextEditor(text: $filterText)
                 .textEditorStyle()
-            
+
             Text("Debounced text:")
                 .padding(.top, 15)
             Text(filterText)
                 .textOutputStyle()
-            
+
             ZStack {
                 Text("\(counter)")
                     .font(.system(size: 50, weight: .light))
@@ -118,39 +127,49 @@ struct DebounceStatePropertyWrapperDemoNative: View {
     }
 }
 
-private extension View {
-    
-    func textEditorStyle() -> some View {
+extension View {
+
+    fileprivate func textEditorStyle() -> some View {
         frame(height: 100)
             .textBoxBorder()
     }
-    
-    func textOutputStyle() -> some View {
+
+    fileprivate func textOutputStyle() -> some View {
         padding(5)
             .frame(height: 100, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.white)
             .textBoxBorder()
     }
-    
-    func textBoxBorder() -> some View {
+
+    fileprivate func textBoxBorder() -> some View {
         clipShape(RoundedRectangle(cornerRadius: 5))
             .contentShape(RoundedRectangle(cornerRadius: 5))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(.gray, lineWidth: 1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 5).stroke(.gray, lineWidth: 1)
+            )
     }
 }
 
 struct DebounceStatePropertyWrapperDemoNative_Previews: PreviewProvider {
     struct DebounceStatePropertyWrapperDemoNative_Harness: View {
-        
+
         var body: some View {
             DebounceStatePropertyWrapperDemoNative()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(LinearGradient(gradient: Gradient(colors: [Color(white: 0.8), Color(white: 0.5)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(white: 0.8), Color(white: 0.5),
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .ignoresSafeArea()
         }
     }
-    
+
     static var previews: some View {
         DebounceStatePropertyWrapperDemoNative_Harness()
             .previewDevice("iPhone 13 Pro Max")

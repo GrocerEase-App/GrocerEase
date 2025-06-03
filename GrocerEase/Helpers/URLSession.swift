@@ -17,10 +17,9 @@ extension URLSession {
     func json(for request: URLRequest) async throws -> JSON {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200
+            httpResponse.statusCode == 200
         else {
-            print("Failed here")
-            throw "Failed to fetch data from URLRequest"
+            throw "Failed to fetch data from URLRequest."
         }
         return try JSON(data: data)
     }

@@ -9,9 +9,11 @@ import UIKit
 import WebKit
 
 extension WKWebView {
+    /// Retrieves all cookies from a WKWebView using Swift async/await syntax.
     func getAllCookiesAsync() async -> [HTTPCookie] {
         await withCheckedContinuation { continuation in
-            self.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+            self.configuration.websiteDataStore.httpCookieStore.getAllCookies {
+                cookies in
                 continuation.resume(returning: cookies)
             }
         }
