@@ -5,8 +5,8 @@
 //  Created by Finlay Nathan on 5/29/25.
 //
 
-import SwiftUI
 import MapKit
+import SwiftUI
 
 @Observable
 class LocationSearchViewModel: NSObject, MKLocalSearchCompleterDelegate {
@@ -33,7 +33,10 @@ class LocationSearchViewModel: NSObject, MKLocalSearchCompleterDelegate {
         }
     }
 
-    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+    func completer(
+        _ completer: MKLocalSearchCompleter,
+        didFailWithError error: Error
+    ) {
         print("❌ Search completer failed: \(error)")
     }
 

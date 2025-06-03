@@ -25,9 +25,9 @@ struct EditItemView: View {
     @Environment(\.modelContext) var modelContext
     var item: GroceryItem
     var onSave: ((GroceryItem) -> Void)?
-    
+
     var body: some View {
-        
+
         Form {
             Section(header: Text("Item Details")) {
                 HStack {
@@ -51,40 +51,49 @@ struct EditItemView: View {
                         if let brand = item.brand {
                             Text(brand).foregroundStyle(.secondary)
                         }
-                        
+
                     }.padding(5)
                     if item.snap ?? false {
                         Spacer()
                         LittleBadge(text: "SNAP")
                     }
                 }
-                
+
                 HStack {
                     Text("Price")
                     Spacer()
                     if item.soldByWeight ?? false {
                         Text("about").foregroundStyle(.secondary)
                     }
-                    if let originalPrice = item.originalPrice, originalPrice != item.price {
-                        Text("$" + String(format: "%.2f", originalPrice)).strikethrough().foregroundStyle(.secondary)
+                    if let originalPrice = item.originalPrice,
+                        originalPrice != item.price
+                    {
+                        Text("$" + String(format: "%.2f", originalPrice))
+                            .strikethrough().foregroundStyle(.secondary)
                     }
                     if let price = item.price {
-                        Text("$" + String(format: "%.2f", price)).foregroundStyle(.secondary)
+                        Text("$" + String(format: "%.2f", price))
+                            .foregroundStyle(.secondary)
                     }
                     if item.soldByWeight ?? false {
                         Text("each").foregroundStyle(.secondary)
                     }
                 }
-                
+
                 if let unitPrice = item.unitPrice {
                     HStack {
                         Text("Unit Price")
                         Spacer()
-                        if let originalUnitPrice = item.originalUnitPrice, originalUnitPrice != item.unitPrice {
-                            Text("$" + String(format: "%.2f", originalUnitPrice)).strikethrough().foregroundStyle(.secondary)
+                        if let originalUnitPrice = item.originalUnitPrice,
+                            originalUnitPrice != item.unitPrice
+                        {
+                            Text(
+                                "$" + String(format: "%.2f", originalUnitPrice)
+                            ).strikethrough().foregroundStyle(.secondary)
                         }
                         if let unitPrice = item.unitPrice {
-                            Text("$" + String(format: "%.2f", unitPrice)).foregroundStyle(.secondary)
+                            Text("$" + String(format: "%.2f", unitPrice))
+                                .foregroundStyle(.secondary)
                         }
                         Text("/").foregroundStyle(.secondary)
                         if let unit = item.unit {
@@ -92,22 +101,19 @@ struct EditItemView: View {
                         }
                     }
                 }
-                
 
             }
-            
+
             Section("Store Details") {
-                Button {
-                    print("hi")
-                } label: {
-                    VStack(alignment: .leading) {
-                        Text("\(item.store.brand) #\(item.store.storeNum)")
-                        if let address = item.store.address {
-                            Text(address).foregroundStyle(.secondary).font(.caption)
-                        }
+
+                VStack(alignment: .leading) {
+                    Text("\(item.store.brand) #\(item.store.storeNum)")
+                    if let address = item.store.address {
+                        Text(address).foregroundStyle(.secondary).font(.caption)
                     }
+
                 }
-                
+
                 if let department = item.department {
                     HStack {
                         Text("Department")
@@ -115,25 +121,26 @@ struct EditItemView: View {
                         Text(department).foregroundStyle(.secondary)
                     }
                 }
-                
+
                 if let location = item.location {
                     HStack {
                         Text("Location")
                         Spacer()
                         Text(location).foregroundStyle(.secondary)
                     }
-                    
+
                 }
-                
+
                 if let inStock = item.inStock {
                     HStack {
                         Text("Availability")
                         Spacer()
-                        Text(inStock ? "In Stock" : "Out of Stock").foregroundStyle(.secondary)
+                        Text(inStock ? "In Stock" : "Out of Stock")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            
+
             Section {
                 if let upc = item.upc {
                     HStack {
@@ -162,20 +169,19 @@ struct EditItemView: View {
                 HStack {
                     Text("SNAP EBT Eligible")
                     Spacer()
-                    
+
                     if let snap = item.snap {
                         Text(snap ? "Yes" : "No").foregroundStyle(.secondary)
                     } else {
                         Text("Unknown").foregroundStyle(.secondary)
                     }
-                        
+
                 }
             } header: {
                 Text("Additional Details")
             } footer: {
             }
-            
-            
+
         }
         .navigationTitle("Review Item")
         .navigationBarTitleDisplayMode(.inline)

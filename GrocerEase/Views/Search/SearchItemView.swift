@@ -13,10 +13,10 @@ struct SearchItemView: View {
     @DebouncedState(delay: 0.75) private var searchText: String = ""
     @State private var isSearching: Bool = false
     @State var list: GroceryList
-    
+
     @State private var status: String?
     var onSave: ((GroceryItem) -> Void)?
-    
+
     @State private var groupedResults: [[GroceryItem]] = []
 
     func fetchSearchResults(for text: String) async throws {
@@ -31,13 +31,13 @@ struct SearchItemView: View {
         }
 
         status = nil
-        
+
         var parent = Array(0..<allItems.count)
 
         // Union-Find helpers
         func find(_ x: Int) -> Int {
             if parent[x] != x {
-                parent[x] = find(parent[x]) // path compression
+                parent[x] = find(parent[x])  // path compression
             }
             return parent[x]
         }
@@ -87,7 +87,6 @@ struct SearchItemView: View {
                 }
             }
         }
-        
 
         // Step 3: Group by root parent
         var clusters: [Int: [GroceryItem]] = [:]
@@ -104,12 +103,11 @@ struct SearchItemView: View {
         }
     }
 
-    
     var body: some View {
         let allItems = groupedResults.flatMap { $0 }
         let minPrice = allItems.compactMap(\.price).min()
         let minUnitPrice = allItems.compactMap(\.unitPrice).min()
-        
+
         NavigationView {
             VStack {
                 if !list.stores.isEmpty {
@@ -125,68 +123,124 @@ struct SearchItemView: View {
                                     } else {
                                         switch list.autoSelect {
                                         case .none:
-                                            SelectStoreView(group: group) { item in
+                                            SelectStoreView(group: group) {
+                                                item in
                                                 self.onSave?(item)
                                                 dismiss()
                                             }
 
                                         case .closest:
-                                            EditItemView(item: group.sorted {
-                                                let distance0 = $0.store.distance ?? .greatestFiniteMagnitude
-                                                let distance1 = $1.store.distance ?? .greatestFiniteMagnitude
-                                                
-                                                if distance0 == distance1 {
-                                                    return $0.store.sortOrder < $1.store.sortOrder
-                                                } else {
-                                                    return distance0 < distance1
-                                                }
-                                            }.first!)
+                                            EditItemView(
+                                                item: group.sorted {
+                                                    let distance0 =
+                                                        $0.store.distance
+                                                        ?? .greatestFiniteMagnitude
+                                                    let distance1 =
+                                                        $1.store.distance
+                                                        ?? .greatestFiniteMagnitude
+
+                                                    if distance0 == distance1 {
+                                                        return $0.store
+                                                            .sortOrder
+                                                            < $1.store.sortOrder
+                                                    } else {
+                                                        return distance0
+                                                            < distance1
+                                                    }
+                                                }.first!
+                                            )
 
                                         case .cheapest:
-                                            EditItemView(item: group.sorted {
-                                                let price0 = $0.price ?? .greatestFiniteMagnitude
-                                                let price1 = $1.price ?? .greatestFiniteMagnitude
-                                                
-                                                if price0 == price1 {
-                                                    return $0.store.sortOrder < $1.store.sortOrder
-                                                } else {
-                                                    return price0 < price1
-                                                }
-                                            }.first!)
+                                            EditItemView(
+                                                item: group.sorted {
+                                                    let price0 =
+                                                        $0.price
+                                                        ?? .greatestFiniteMagnitude
+                                                    let price1 =
+                                                        $1.price
+                                                        ?? .greatestFiniteMagnitude
+
+                                                    if price0 == price1 {
+                                                        return $0.store
+                                                            .sortOrder
+                                                            < $1.store.sortOrder
+                                                    } else {
+                                                        return price0 < price1
+                                                    }
+                                                }.first!
+                                            )
 
                                         case .custom:
-                                            EditItemView(item: group.sorted {
-                                                $0.store.sortOrder < $1.store.sortOrder
-                                            }.first!)
+                                            EditItemView(
+                                                item: group.sorted {
+                                                    $0.store.sortOrder
+                                                        < $1.store.sortOrder
+                                                }.first!
+                                            )
                                         }
 
-                                        
                                     }
                                 } label: {
-                                    if let cheapest = group.compactMap({ $0.price != nil ? $0 : nil }).min(by: { $0.price! < $1.price! }) {
+                                    if let cheapest = group.compactMap({
+                                        $0.price != nil ? $0 : nil
+                                    }).min(by: { $0.price! < $1.price! }) {
                                         HStack {
-                                            ProductImageView(url: cheapest.imageUrl)
+                                            ProductImageView(
+                                                url: cheapest.imageUrl
+                                            )
 
                                             VStack(alignment: .leading) {
                                                 Text(item.name)
 
                                                 let otherCount = group.count - 1
-                                                let othersText = otherCount > 0 ? " + \(otherCount) others" : ""
+                                                let othersText =
+                                                    otherCount > 0
+                                                    ? " + \(otherCount) others"
+                                                    : ""
 
                                                 HStack(spacing: 4) {
                                                     if let price = item.price {
-                                                        Text(String(format: "$%.2f each", price))
-                                                            .foregroundStyle(price == minPrice ? .green : .secondary)
+                                                        Text(
+                                                            String(
+                                                                format:
+                                                                    "$%.2f each",
+                                                                price
+                                                            )
+                                                        )
+                                                        .foregroundStyle(
+                                                            price == minPrice
+                                                                ? .green
+                                                                : .secondary
+                                                        )
                                                     }
 
-                                                    if let unitPrice = item.unitPrice {
-                                                        Text("(" + String(format: "$%.2f / %@", unitPrice, item.unitString ?? "each") + ")")
-                                                            .foregroundStyle(unitPrice == minUnitPrice ? .green : .secondary)
+                                                    if let unitPrice = item
+                                                        .unitPrice
+                                                    {
+                                                        Text(
+                                                            "("
+                                                                + String(
+                                                                    format:
+                                                                        "$%.2f / %@",
+                                                                    unitPrice,
+                                                                    item
+                                                                        .unitString
+                                                                        ?? "each"
+                                                                ) + ")"
+                                                        )
+                                                        .foregroundStyle(
+                                                            unitPrice
+                                                                == minUnitPrice
+                                                                ? .green
+                                                                : .secondary
+                                                        )
                                                     }
                                                 }
 
-                                                Text("at \(item.store.brand)\(othersText)")
-                                                    .foregroundStyle(.secondary)
+                                                Text(
+                                                    "at \(item.store.brand)\(othersText)"
+                                                )
+                                                .foregroundStyle(.secondary)
                                             }
 
                                         }
@@ -196,7 +250,11 @@ struct SearchItemView: View {
                         }
                     }
                     .listStyle(PlainListStyle())
-                    .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search")
+                    .searchable(
+                        text: $searchText,
+                        isPresented: $isSearching,
+                        prompt: "Search"
+                    )
                     .onChange(of: searchText) {
                         Task {
                             try? await fetchSearchResults(for: searchText)

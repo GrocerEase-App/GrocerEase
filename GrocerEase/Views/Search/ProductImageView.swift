@@ -32,4 +32,6 @@ struct ProductImageView: View {
     }
 }
 
-
+#Preview {
+    ProductImageView(url: GroceryItem.sample.imageUrl, large: true)
+}

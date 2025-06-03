@@ -87,7 +87,6 @@ struct GroceryListView: View {
                                             item.isCompleted
                                                 ? .secondary : .primary
                                         )
-                                    //                                        .strikethrough(item.isCompleted, color: .gray)
                                     Text(
                                         "$\(String(format: "%.2f", item.price ?? 0.0)) at \(item.store.brand)"
                                     )
@@ -105,8 +104,9 @@ struct GroceryListView: View {
                             if let originalIndex = list.items.firstIndex(
                                 where: { $0.id == item.id })
                             {
-                                list.items.remove(at: originalIndex)
-                                modelContext.delete(list.items[originalIndex])
+                                let _ = withAnimation {
+                                    list.items.remove(at: originalIndex)
+                                }
                             }
                         }
                     }
