@@ -20,11 +20,11 @@ A precompiled version will be available soon upon public release.
 - Scrum Documents:
   - [Initial Release Plan](/docs/ReleasePlan.md)
   - [Initial Presentation](https://docs.google.com/presentation/d/1FCvCydDpRywvkFSoxxPx7ubsZva4ZnF2WXaF3ItRHvM/)
-  - [Sprint Plans/Reports and Definitions of Done](https://docs.google.com/document/d/1otppjBPj2sJRv_HozeUsrXeE02fsSP7swfJohjOz9ls/)
+  - [Sprint Plans/Reports & Definitions of Done](/docs/SprintPlans.md)
   - [Contribution Guidelines (Style Guide/Working Agreements)](/docs/CONTRIBUTING.md)
   - [Final Presentation](https://docs.google.com/presentation/d/1d3YQJNgpAsnkv9DqGApwtSE8EqbuOxeBaiqLnCnd_uw/)
-- [Test Plan and Report](/docs/TestPlan.md)
-- [Release Summary](/docs/ReleaseSummary.md)
+- [Test Plan & Report](/docs/TestPlan.md)
+- [Release Summary & Acceptance Criteria](/docs/ReleaseSummary.md)
 - Release Documents:
   - [README.md](/README.md) (this file)
   - [Dependency List](/docs/Dependencies.md)
