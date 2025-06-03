@@ -32,6 +32,4 @@ A precompiled version will be available soon upon public release.
   - [Architecture Design Considerations](https://docs.google.com/document/d/1Q8ayj9w0NozvH59YdV7C3sXPfIP6tw3UhksvVRtoR5k/)
 
 ## License
-Access to and usage of the software and documentation contained in this repository is currently exclusively granted to its contributors, private beta testers, and the UCSC Spring 2025 CSE 115A course staff for purposes of grading.  
-  
-Upon public release, this software will be licensed under GNU GPLv3. It will also be separately licensed to Apple for distribution through TestFlight and on the App Store.
+This software is licensed under the GNU GPLv3. It's separately licensed to Apple for distribution through TestFlight and on the App Store.
