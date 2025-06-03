@@ -1,5 +1,8 @@
 # GrocerEase Architecture Design
 
+## Diagram
+![Diagram of App Architecture](/docs/Architecture.png "Diagram of App Architecture")
+
 ## User Interface
 
 The GrocerEase user interface is written in Swift using SwiftUI.
