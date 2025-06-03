@@ -32,4 +32,4 @@ A precompiled version will be available soon upon public release.
   - [Architecture Design Considerations](/docs/Architecture.md)
 
 ## License
-This software is licensed under the [GNU GPLv3](/docs/COPYING.txt). It's separately licensed to Apple for distribution through TestFlight and on the App Store.
+This software is licensed under the [GNU GPLv3](/COPYING.txt). It's separately licensed to Apple for distribution through TestFlight and on the App Store.
