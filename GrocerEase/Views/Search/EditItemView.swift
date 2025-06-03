@@ -80,7 +80,7 @@ struct EditItemView: View {
                     }
                 }
 
-                if let unitPrice = item.unitPrice {
+                if item.unitPrice != nil {
                     HStack {
                         Text("Unit Price")
                         Spacer()
