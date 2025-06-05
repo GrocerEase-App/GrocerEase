@@ -7,7 +7,7 @@ GrocerEase lets you create smart grocery lists that track prices of items at var
 - Xcode 16.3+ (if building from source)
 
 ### App Store/TestFlight
-A precompiled version will be available soon upon public release.  
+You can install the public beta from [TestFlight](https://testflight.apple.com/join/7xDk3cAt).
 
 ### Build from Source
 1. Install Xcode and a supported iOS runtime
