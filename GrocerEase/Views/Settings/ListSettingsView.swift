@@ -48,6 +48,7 @@ struct ListSettingsView: View {
                     TextField("New List", text: $viewModel.list.name)
                         .multilineTextAlignment(.trailing)
                         .foregroundStyle(.secondary)
+                        .submitLabel(.done)
                 }
             }
 
