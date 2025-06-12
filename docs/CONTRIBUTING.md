@@ -20,4 +20,6 @@ For development simplicity, a String describing an error is an appropriate way t
 
 Do not commit code to the main branch that does not compile (install and run) successfully.
 
-File names should match the name of the top-level symbol (class) they contain. Files should not contain more than one top level definition
+File names should match the name of the top-level symbol (class) they contain. Files should not contain more than one top level definition.
+
+For a feature to be considered done, related code should follow all standards and practices listed in this document. In addition, any related tests should pass and all acceptance criteria should be tested manually and documented or automatically with unit tests.
